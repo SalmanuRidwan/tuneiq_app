@@ -29,7 +29,7 @@ ARTISTS = {
     "Omah Lay": "5yOvAmpIR7hVxiS6Ls5DPO",
 }
 PLATFORM = "Spotify"
-OUTPUT_FILE = "spotify_kworb_artist_tracks.csv"
+OUTPUT_FILE = "artist_tracks.csv"
 
 # ----------------------------------------------------------
 # SELENIUM SETUP
@@ -59,25 +59,25 @@ if not os.path.exists(OUTPUT_FILE):
 # ----------------------------------------------------------
 DB_FILE = "spotify_kworb_artist_tracks.db"
 
-conn = sqlite3.connect(DB_FILE)
-cursor = conn.cursor()
+# conn = sqlite3.connect(DB_FILE)
+# cursor = conn.cursor()
 
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS artist_tracks (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    artist TEXT,
-    track TEXT,
-    platform TEXT,
-    country TEXT,
-    streams INTEGER,
-    month TEXT,
-    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(artist, track, country, month)
-)
-""")
+# cursor.execute("""
+# CREATE TABLE IF NOT EXISTS artist_tracks (
+#     id INTEGER PRIMARY KEY AUTOINCREMENT,
+#     artist TEXT,
+#     track TEXT,
+#     platform TEXT,
+#     country TEXT,
+#     streams INTEGER,
+#     month TEXT,
+#     last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+#     UNIQUE(artist, track, country, month)
+# )
+# """)
 
 
-conn.commit()
+# conn.commit()
 
 
 # ----------------------------------------------------------
@@ -96,7 +96,7 @@ for artist_name, artist_id in ARTISTS.items():
             rows = track_table.find_elements(By.TAG_NAME, "tr")[1:]  # skip header
             break
         except Exception as e:
-            print(f" Error loading artist page for {artist_name}: {e}")
+            print(f"❌ Error loading artist page for {artist_name}: {e}")
             time.sleep(3)
 
     for i in range(len(rows)):
@@ -127,7 +127,7 @@ for artist_name, artist_id in ARTISTS.items():
                 streams_tab.click()
                 time.sleep(2)
             except Exception as e:
-                print(f"     Couldn't click streams tab for {track_name}: {e}")
+                print(f"    ⚠️ Couldn't click streams tab for {track_name}: {e}")
                 driver.back()
                 continue
 
@@ -137,7 +137,7 @@ for artist_name, artist_id in ARTISTS.items():
                     EC.presence_of_element_located((By.TAG_NAME, "table"))
                 )
             except:
-                print(f"     No streams table found for {track_name}")
+                print(f"    ⚠️ No streams table found for {track_name}")
                 driver.back()
                 continue
 
@@ -152,7 +152,7 @@ for artist_name, artist_id in ARTISTS.items():
                     break
 
             if not total_row:
-                print(f"     No total row found for {track_name}")
+                print(f"    ⚠️ No total row found for {track_name}")
                 driver.back()
                 continue
 
@@ -190,39 +190,38 @@ for artist_name, artist_id in ARTISTS.items():
 
             # ...
 
-            # with open(OUTPUT_FILE, "a", newline="", encoding="utf-8-sig") as f:
-            #     writer = csv.writer(f)
-            #     for country, streams in zip(countries, totals):
-            #         writer.writerow([
-            #             clean_text(artist_name),
-            #             clean_text(track_name),
-            #             PLATFORM,
-            #             clean_text(country),
-            #             clean_number(streams),
-            #             today                                                                                                                                                                                                                                                                                                                                                                                 
-            #         ])
+            with open(OUTPUT_FILE, "a", newline="", encoding="utf-8-sig") as f:
+                writer = csv.writer(f)
+                for country, streams in zip(countries, totals):
+                    writer.writerow([
+                        clean_text(artist_name),
+                        clean_text(track_name),
+                        PLATFORM,
+                        clean_text(country),
+                        clean_number(streams),
+                        today                                                                                                                                                                                                                                                                                                                                                                                 
+                    ])
 
-            for country, streams in zip(countries, totals):
-                cursor.execute("""
-                    INSERT OR REPLACE INTO artist_tracks (artist, track, platform, country, streams, month)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                """, (
-                    clean_text(artist_name),
-                    clean_text(track_name),
-                    PLATFORM,
-                    clean_text(country),
-                    int(clean_number(streams) or 0),
-                    today
-                ))                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
+            # for country, streams in zip(countries, totals):
+            #     cursor.execute("""
+            #         INSERT OR REPLACE INTO artist_tracks (artist, track, platform, country, streams, month)
+            #         VALUES (?, ?, ?, ?, ?, ?)
+            #     """, (
+            #         clean_text(artist_name),
+            #         clean_text(track_name),
+            #         PLATFORM,
+            #         clean_text(country),
+            #         int(clean_number(streams) or 0),
+            #         today
+            #     ))                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
 
-            conn.commit()                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+            # conn.commit()                                          
 
-
-            print(f"    Saved totals for {track_name}")                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+            print(f"    ✅ Saved totals for {track_name}")                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
             driver.back()
 
         except Exception as e:
-            print(f"    Error processing track #{i}: {e}")
+            print(f"    ❌ Error processing track #{i}: {e}")
             try:
                 driver.get(artist_url)
             except:
@@ -230,5 +229,5 @@ for artist_name, artist_id in ARTISTS.items():
             continue
 
 driver.quit()
-conn.close()
+# conn.close()
 print("\n✅ Scraping complete!")
