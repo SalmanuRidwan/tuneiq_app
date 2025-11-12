@@ -29,7 +29,7 @@ ARTISTS = {
     "Omah Lay": "5yOvAmpIR7hVxiS6Ls5DPO",
 }
 PLATFORM = "Spotify"
-OUTPUT_FILE = "spotify_kworb_artist_tracks.csv"
+OUTPUT_FILE = "artist_tracks.csv"
 
 # ----------------------------------------------------------
 # SELENIUM SETUP
