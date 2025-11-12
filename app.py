@@ -1,5 +1,5 @@
 """
-TuneIQ Insight - Making Nigeria's music economy visible.
+TuneIQ Solution - Making Nigeria's music economy visible.
 Streamlit dashboard for music streaming analytics and economic impact analysis.
 """
 
@@ -62,8 +62,8 @@ except Exception:
 
 # Page config
 st.set_page_config(
-    page_title="TuneIQ Insight",
-    page_icon="👑",  # Changed to crown to match logo
+    page_title="TuneIQ Solution",
+    page_icon="assets/logo.png",
     layout="wide"
 )
 
@@ -518,17 +518,45 @@ def main():
     image_base64 = get_base64_image("./assets/logo.png")
 
     # Main header with logo and title
+    # st.markdown(f"""
+    # <div class="logo-container" style="display:flex; align-items:left; gap:20px; margin-bottom:20px;">
+    #     <img src="data:image/png;base64,{image_base64}" 
+    #         alt="TuneIQ Logo" 
+    #         style="width:100px; height:100px; object-fit:contain;">
+    #     <div class="logo-text">
+    #         <h1 class="logo-title" style="margin-left: 0px; align-items: left; color:#00FFC2;">TuneIQ Solution</h1>
+    #         <div class="logo-tagline" style="font-size:1.5em; color:#ccc;">Making Nigeria's music economy visible through data-driven analytics.</div>
+    #     </div>
+    # </div>
+    # """, unsafe_allow_html=True)
     st.markdown(f"""
-    <div class="logo-container" style="display:flex; align-items:center; gap:20px; margin-bottom:20px;">
-        <img src="data:image/png;base64,{image_base64}" 
-            alt="TuneIQ Logo" 
-            style="width:100px; height:100px; object-fit:contain;">
-        <div class="logo-text">
-            <h1 class="logo-title" style="margin:0; color:#00FFC2;">TuneIQ Insight</h1>
-            <div class="logo-tagline" style="font-size:1.1em; color:#ccc;">Smart Data for Nigerian Music</div>
-        </div>
+<style>
+/* higher specificity + important to override theme styles */
+.logo-container {{ display:flex !important; align-items:center !important; gap:12px !important; }}
+.logo-container img {{ width:90px !important; height:90px !important; object-fit:contain !important; margin:0 !important; }}
+.logo-text {{ display:flex !important; flex-direction:column !important; justify-content:center !important; }}
+.logo-title {{
+  margin:0 !important;
+  padding:0 !important;
+  font-size:2.0em !important;
+  line-height:1 !important;
+  color:#00FFC2 !important;
+  display:inline-block !important;
+  vertical-align:middle !important;
+}}
+.logo-tagline {{ margin-top:4px !important; font-size:1.1em !important; color:#ccc !important; }}
+</style>
+
+<div class="logo-container">
+    <img src="data:image/png;base64,{image_base64}" alt="TuneIQ Logo">
+    <div class="logo-text">
+        <h1 class="logo-title">TuneIQ Solution</h1>
+        <div class="logo-tagline">Making Nigeria's music economy visible through data-driven analytics.</div>
     </div>
-    """, unsafe_allow_html=True)
+</div>
+""", unsafe_allow_html=True)
+
+
     
     # Initialize session state for section visibility
     if 'show_live_data' not in st.session_state:
