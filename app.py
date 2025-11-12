@@ -70,17 +70,17 @@ st.set_page_config(
 # Custom CSS for dark neon theme
 st.markdown("""
 <style>
-    /* Root neon theme variables */
+    /* Root theme variables - Updated Palette */
     :root{
-        --bg-1: #05030a;
-        --bg-2: #0b1020;
-        --neon-1: #00FFC2;
-        --neon-2: #00A3FF;
-        --accent: #9B59FF;
-        --gold: #FFD700;
-        --silver: #C0C0C0;
-        --glass: rgba(255,255,255,0.04);
-        --muted: #98ffe0;
+        --bg-1: #F4F7F5;
+        --bg-2: #F4F7F5;
+        --neon-1: #068D9D;
+        --neon-2: #068D9D;
+        --accent: #3C3744;
+        --gold: #068D9D;
+        --silver: #3C3744;
+        --glass: rgba(6,141,157,0.08);
+        --muted: #3C3744;
     }
     
     /* Logo styles */
@@ -95,7 +95,7 @@ st.markdown("""
     .logo-image {
         width: 80px;
         height: 80px;
-        filter: drop-shadow(0 0 10px rgba(0,255,194,0.3));
+        filter: drop-shadow(0 0 10px rgba(6,141,157,0.3));
     }
     
     .logo-text {
@@ -107,16 +107,16 @@ st.markdown("""
         font-size: 2.5rem !important;
         font-weight: 800;
         margin: 0 !important;
-        background: linear-gradient(90deg, var(--gold), var(--silver));
+        background: linear-gradient(90deg, #068D9D, #3C3744);
         -webkit-background-clip: text;
         background-clip: text;
         color: transparent;
-        text-shadow: 0 0 20px rgba(255,215,0,0.2);
+        text-shadow: 0 0 20px rgba(6,141,157,0.2);
     }
     
     .logo-tagline {
         font-size: 1.1rem;
-        color: var(--muted);
+        color: #3C3744;
         margin-top: 5px;
         font-weight: 400;
     }
@@ -124,10 +124,10 @@ st.markdown("""
     /* Animated gradient background */
     html, body, .stApp {
         height: 100%;
-        background: radial-gradient(circle at 10% 10%, rgba(0,163,255,0.06), transparent 10%),
-                                radial-gradient(circle at 90% 90%, rgba(155,89,255,0.03), transparent 10%),
-                                linear-gradient(180deg, var(--bg-1), var(--bg-2));
-        color: var(--muted) !important;
+        background: radial-gradient(circle at 10% 10%, rgba(6,141,157,0.06), transparent 10%),
+                                radial-gradient(circle at 90% 90%, rgba(60,55,68,0.03), transparent 10%),
+                                linear-gradient(180deg, #F4F7F5, #F4F7F5);
+        color: #3C3744 !important;
         font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
     }
 
@@ -136,7 +136,7 @@ st.markdown("""
         font-size: 2.2rem !important;
         margin: 0 !important;
         font-weight: 800;
-        background: linear-gradient(90deg, var(--neon-1), var(--neon-2), var(--accent));
+        background: linear-gradient(90deg, #068D9D, #3C3744, #068D9D);
         -webkit-background-clip: text;
         background-clip: text;
         color: transparent;
@@ -148,50 +148,50 @@ st.markdown("""
 
     /* Glass KPI cards */
     .stMetric, .stMetric > div {
-        background: linear-gradient(135deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)) !important;
-        border: 1px solid rgba(0,255,194,0.12) !important;
-        box-shadow: 0 8px 30px rgba(0,0,0,0.6) inset, 0 8px 24px rgba(0,255,194,0.04);
+        background: linear-gradient(135deg, rgba(6,141,157,0.04), rgba(60,55,68,0.02)) !important;
+        border: 1px solid rgba(6,141,157,0.2) !important;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.1) inset, 0 8px 24px rgba(6,141,157,0.06);
         border-radius: 12px !important;
         padding: 10px !important;
-        color: var(--muted) !important;
+        color: #3C3744 !important;
     }
 
     /* Bright neon values for metric numbers */
     .stMetric .value, .stMetric .stMetricValue {
-        color: var(--neon-1) !important;
+        color: #068D9D !important;
         font-weight: 800 !important;
-        text-shadow: 0 6px 18px rgba(0,255,194,0.12);
+        text-shadow: 0 6px 18px rgba(6,141,157,0.12);
     }
 
     /* Make buttons look like neon pills */
     .stButton>button {
-        background: linear-gradient(90deg, rgba(0,255,194,0.12), rgba(0,163,255,0.12));
-        color: var(--neon-1) !important;
-        border: 1px solid rgba(0,255,194,0.18) !important;
+        background: linear-gradient(90deg, rgba(6,141,157,0.12), rgba(60,55,68,0.12));
+        color: #068D9D !important;
+        border: 1px solid rgba(6,141,157,0.25) !important;
         padding: 10px 14px !important;
         border-radius: 999px !important;
-        box-shadow: 0 8px 30px rgba(0,163,255,0.06);
+        box-shadow: 0 8px 30px rgba(6,141,157,0.08);
         transition: transform 0.12s ease, box-shadow 0.12s ease;
     }
-    .stButton>button:hover{ transform: translateY(-2px); box-shadow: 0 16px 46px rgba(0,163,255,0.12); }
+    .stButton>button:hover{ transform: translateY(-2px); box-shadow: 0 16px 46px rgba(6,141,157,0.15); }
 
     /* Sidebar styling */
-    .css-1d391kg .css-1lcbmhc { background: linear-gradient(180deg, rgba(11,16,32,0.6), rgba(8,10,20,0.6)); }
-    .sidebar .stMarkdown, .sidebar .stTextInput { color: var(--muted) !important; }
+    .css-1d391kg .css-1lcbmhc { background: linear-gradient(180deg, rgba(6,141,157,0.08), rgba(60,55,68,0.06)); }
+    .sidebar .stMarkdown, .sidebar .stTextInput { color: #3C3744 !important; }
 
     /* Glass panels for main content blocks */
     .element-container, .block-container .stExpander {
-        background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-        border: 1px solid rgba(155,89,255,0.04);
+        background: linear-gradient(180deg, rgba(6,141,157,0.04), rgba(60,55,68,0.02));
+        border: 1px solid rgba(6,141,157,0.15);
         border-radius: 10px;
         padding: 12px;
     }
 
     /* Tables */
-    .stTable td, .stTable th { color: var(--muted) !important; }
+    .stTable td, .stTable th { color: #3C3744 !important; }
 
     /* Footer */
-    footer { opacity: 0.8; color: #7FFFD4 !important; }
+    footer { opacity: 0.8; color: #068D9D !important; }
 
 </style>
 """, unsafe_allow_html=True)
@@ -423,13 +423,13 @@ def main():
     /* Header button styles */
     div[data-testid="stHorizontalBlock"] > div button {
         width: 100%;
-        border: 1px solid rgba(255,215,0,0.18) !important;
+        border: 1px solid rgba(6,141,157,0.25) !important;
         border-radius: 12px !important;
         padding: 15px 20px !important;
-        color: var(--gold) !important;
+        color: #068D9D !important;
         background: linear-gradient(135deg, 
-            rgba(0,255,194,0.08), 
-            rgba(0,163,255,0.08)
+            rgba(6,141,157,0.08), 
+            rgba(60,55,68,0.06)
         ) !important;
         transition: all 0.3s ease !important;
         position: relative;
@@ -447,7 +447,7 @@ def main():
         background: linear-gradient(
             45deg,
             transparent,
-            rgba(255,215,0,0.1),
+            rgba(6,141,157,0.1),
             transparent
         );
         transform: rotate(45deg);
@@ -457,10 +457,10 @@ def main():
     /* Button hover effect */
     div[data-testid="stHorizontalBlock"] > div button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(255,215,0,0.15) !important;
+        box-shadow: 0 8px 20px rgba(6,141,157,0.15) !important;
         background: linear-gradient(135deg, 
-            rgba(0,255,194,0.12), 
-            rgba(0,163,255,0.12)
+            rgba(6,141,157,0.12), 
+            rgba(60,55,68,0.1)
         ) !important;
     }
     
@@ -471,12 +471,12 @@ def main():
     /* Selected button state */
     div[data-testid="stHorizontalBlock"] > div button.selected {
         background: linear-gradient(135deg, 
-            rgba(0,255,194,0.2), 
-            rgba(0,163,255,0.2)
+            rgba(6,141,157,0.2), 
+            rgba(60,55,68,0.1)
         ) !important;
         box-shadow: 
-            0 8px 25px rgba(0,255,194,0.2),
-            0 0 0 1px rgba(0,255,194,0.4) !important;
+            0 8px 25px rgba(6,141,157,0.2),
+            0 0 0 1px rgba(6,141,157,0.4) !important;
         transform: translateY(-2px);
     }
 
@@ -486,20 +486,20 @@ def main():
         border-radius: 12px;
         margin: 15px 0;
         background: linear-gradient(135deg,
-            rgba(0,255,194,0.05),
-            rgba(0,163,255,0.05)
+            rgba(6,141,157,0.05),
+            rgba(60,55,68,0.03)
         );
-        border: 1px solid rgba(0,255,194,0.1);
+        border: 1px solid rgba(6,141,157,0.15);
         backdrop-filter: blur(10px);
     }
 
     /* Section title */
     .section-title {
-        color: var(--neon-1);
+        color: #068D9D;
         font-weight: 600;
         font-size: 1.2em;
         margin-bottom: 15px;
-        text-shadow: 0 0 10px rgba(0,255,194,0.3);
+        text-shadow: 0 0 10px rgba(6,141,157,0.2);
     }
 
     /* Icon styling in buttons */
@@ -625,8 +625,41 @@ def main():
 
             if use_live:
                 st.info("Configure API credentials below")
+            
+            # Web Scraper Quick Access
+            st.markdown("---")
+            st.markdown('<p class="section-title">Web Data Source</p>', unsafe_allow_html=True)
+            
+            web_scraper_col1, web_scraper_col2 = st.columns([2, 1])
+            with web_scraper_col1:
+                web_artist = st.text_input(
+                    "Artist Name for Web Scraping",
+                    value="Burna Boy",
+                    help="Enter artist name to fetch trending data and news"
+                )
+            with web_scraper_col2:
+                fetch_web_data = st.button("🔍 Scrape Web Data", use_container_width=True)
+            
+            if fetch_web_data:
+                with st.spinner(f"Scraping web data for {web_artist}..."):
+                    try:
+                        from data_pipeline import fetch_live_data
+                        web_df = fetch_live_data(source="web", artist_name=web_artist)
+                        
+                        if not web_df.empty:
+                            st.session_state['web_scraped_data'] = web_df
+                            st.success(f"✓ Successfully scraped {len(web_df)} results for {web_artist}")
+                            
+                            # Show preview of scraped data
+                            with st.expander(f"Preview Web Data ({len(web_df)} results)"):
+                                st.dataframe(web_df, use_container_width=True)
+                        else:
+                            st.warning(f"No results found for {web_artist}. Try a different artist or check your internet connection.")
+                    except Exception as e:
+                        st.error(f"✗ Web scraping failed: {str(e)}")
                 
             st.markdown('</div>', unsafe_allow_html=True)
+
     
     # Live data configuration in expandable section
     if use_live:

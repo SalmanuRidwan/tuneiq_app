@@ -103,14 +103,79 @@ To enable live data fetching:
    - Get an Apple Music Developer Token
    - Configure the token in the dashboard's Live Mode section
 
+## Web Data Source (Web Scraping)
+
+TuneIQ Insight now includes a **Web Scraping module** to fetch real-time streaming trends, artist news, and music-related content when API credentials are unavailable or to enrich existing data.
+
+### Features
+
+- **Multi-Source Scraping**: Pulls data from Google News, Genius Lyrics, and AllMusic
+- **Graceful Fallback**: Works seamlessly as a fallback when APIs aren't available
+- **Data Enrichment**: Enhances streaming analytics with web-sourced insights
+- **Robust Error Handling**: Network errors and missing data are handled gracefully with detailed logging
+- **Artist Search**: Enter any artist name to scrape trending data and news mentions
+
+### How to Use
+
+1. Click **📊 Data Configuration** in the dashboard
+2. Scroll to the **Web Data Source** section
+3. Enter an artist name (default: "Burna Boy")
+4. Click **🔍 Scrape Web Data**
+5. Review results in the expandable preview panel
+
+### Data Returned
+
+The web scraper collects:
+- **Artist Name**: The queried artist
+- **Title**: Song, news, or content title
+- **URL**: Direct link to the source
+- **Source**: Platform (Google News, Genius Lyrics, AllMusic)
+- **Snippet**: Brief description or preview
+- **Date Fetched**: Timestamp of the scrape
+
+### Example
+
+```python
+from web_scraper import scrape_music_trends
+import pandas as pd
+
+# Fetch web data for an artist
+results_df = scrape_music_trends("Burna Boy", max_results=10)
+print(results_df)
+```
+
+### Limitations
+
+- Web scraping is subject to website rate limits and robots.txt policies
+- Data is best-effort; some websites may block or change structure
+- Not a replacement for official APIs; use as enrichment or demo data only
+- Results depend on current internet connection and website availability
+
+### Integration with Data Pipeline
+
+The web scraper is integrated into `data_pipeline.py` via two functions:
+
+```python
+# Fetch standalone web data
+from data_pipeline import fetch_live_data
+web_data = fetch_live_data(source="web", artist_name="Wizkid")
+
+# Enrich existing streaming data with web insights
+from data_pipeline import enrich_data_with_web
+enriched_df = enrich_data_with_web(streaming_df, "Wizkid")
+```
+
 ## Contributing
 
 This project is part of our effort to bring transparency to Nigeria's music economy. We welcome contributions that help:
 - Improve data accuracy
-- Add new platforms
+- Add new platforms and data sources
 - Enhance visualizations
 - Expand economic impact analysis
+- Improve web scraping coverage and reliability
 
 ## License
 
 MIT License - See LICENSE file for details
+
+```
