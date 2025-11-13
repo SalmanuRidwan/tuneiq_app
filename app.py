@@ -589,11 +589,11 @@ def main():
   padding:0 !important;
   font-size:2.0em !important;
   line-height:1 !important;
-  color:#00FFC2 !important;
+  color:#black !important;
   display:inline-block !important;
   vertical-align:middle !important;
 }}
-.logo-tagline {{ margin-top:4px !important; font-size:1.1em !important; color:#ccc !important; }}
+.logo-tagline {{ margin-top:4px !important; font-size:1.1em !important; color:#88888 !important; }}
 </style>
 
 <div class="logo-container">
