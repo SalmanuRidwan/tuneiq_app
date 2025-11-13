@@ -70,177 +70,663 @@ st.set_page_config(
 # Custom CSS for dark neon theme
 st.markdown("""
 <style>
-    /* Root theme variables - Updated Palette */
-    :root{
-        --bg-1: #F4F7F5;
-        --bg-2: #F4F7F5;
-        --neon-1: #0EA5A4; /* teal */
-        --neon-2: #7C3AED; /* violet accent */
-        --accent: #1F213A; /* deep indigo */
-        --gold: #F59E0B; /* warm accent */
-        --silver: #94A3B8;
-        --glass: rgba(14,165,164,0.08);
-        --muted: #475569;
+    /* ============================================
+   TUNEIQ MODERN UI - ENHANCED CSS
+   ============================================ */
+
+/* ============================================
+   1. ROOT VARIABLES & THEME
+   ============================================ */
+:root {
+    /* Colors */
+    --primary: #0EA5A4;
+    --primary-light: #10bfbd;
+    --primary-dark: #0c8483;
+    --secondary: #7C3AED;
+    --accent: #F59E0B;
+    --bg-primary: #F4F7F5;
+    --bg-secondary: #FFFFFF;
+    --text-primary: #1F213A;
+    --text-secondary: #64748B;
+    --text-muted: #94A3B8;
+    --border: rgba(14, 165, 164, 0.15);
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    --shadow-glow: 0 0 20px rgba(14, 165, 164, 0.15);
+    
+    /* Spacing Scale */
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.25rem;
+    --space-6: 1.5rem;
+    --space-8: 2rem;
+    --space-10: 2.5rem;
+    --space-12: 3rem;
+    --space-16: 4rem;
+    
+    /* Border Radius */
+    --radius-sm: 0.375rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
+    --radius-2xl: 1.5rem;
+    --radius-full: 9999px;
+    
+    /* Typography */
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+    --font-weight-extrabold: 800;
+    
+    /* Transitions */
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================
+   2. BASE STYLES & LAYOUT
+   ============================================ */
+html, body, .stApp {
+    font-family: var(--font-sans);
+    background: linear-gradient(135deg, #F4F7F5 0%, #E8F3F1 100%);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Main container with better padding */
+.main .block-container {
+    padding-top: var(--space-8) !important;
+    padding-bottom: var(--space-16) !important;
+    max-width: 1400px !important;
+}
+
+/* ============================================
+   3. TYPOGRAPHY HIERARCHY
+   ============================================ */
+h1, h2, h3, h4, h5, h6 {
+    font-weight: var(--font-weight-bold);
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+}
+
+h1 {
+    font-size: 2.5rem !important;
+    font-weight: var(--font-weight-extrabold) !important;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: var(--space-6) !important;
+}
+
+h2 {
+    font-size: 1.875rem !important;
+    color: var(--text-primary);
+    margin-bottom: var(--space-4) !important;
+}
+
+h3 {
+    font-size: 1.5rem !important;
+    color: var(--text-primary);
+    margin-bottom: var(--space-3) !important;
+}
+
+/* ============================================
+   4. LOGO & HEADER SECTION
+   ============================================ */
+.logo-container {
+    display: flex !important;
+    align-items: center !important;
+    gap: var(--space-4) !important;
+    padding: var(--space-6) 0 !important;
+    margin-bottom: var(--space-8) !important;
+    position: relative;
+}
+
+.logo-container::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        var(--border) 20%, 
+        var(--border) 80%, 
+        transparent 100%
+    );
+}
+
+.logo-container img {
+    width: 80px !important;
+    height: 80px !important;
+    object-fit: contain !important;
+    filter: drop-shadow(0 4px 12px rgba(14, 165, 164, 0.2));
+    transition: transform var(--transition-base);
+}
+
+.logo-container:hover img {
+    transform: scale(1.05);
+}
+
+.logo-title {
+    font-size: 2.25rem !important;
+    font-weight: var(--font-weight-extrabold) !important;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--text-primary) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent !important;
+    margin: 0 !important;
+    line-height: 1 !important;
+}
+
+.logo-tagline {
+    font-size: 0.95rem !important;
+    color: var(--text-secondary) !important;
+    font-weight: var(--font-weight-medium);
+    margin-top: var(--space-2) !important;
+}
+
+/* ============================================
+   5. MODERN CARD SYSTEM
+   ============================================ */
+.modern-card {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-xl);
+    padding: var(--space-6);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border);
+    transition: all var(--transition-base);
+    position: relative;
+    overflow: hidden;
+}
+
+.modern-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    opacity: 0;
+    transition: opacity var(--transition-base);
+}
+
+.modern-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-xl), var(--shadow-glow);
+}
+
+.modern-card:hover::before {
+    opacity: 1;
+}
+
+/* ============================================
+   6. ENHANCED METRIC CARDS
+   ============================================ */
+.stMetric {
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.95) 0%, 
+        rgba(255, 255, 255, 0.85) 100%
+    ) !important;
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-xl) !important;
+    padding: var(--space-6) !important;
+    box-shadow: var(--shadow-md) !important;
+    transition: all var(--transition-base) !important;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Metric card accent bar */
+.stMetric::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary), var(--accent));
+}
+
+.stMetric:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: var(--shadow-xl), var(--shadow-glow) !important;
+    border-color: var(--primary) !important;
+}
+
+/* Metric label styling */
+.stMetric label {
+    font-size: 0.875rem !important;
+    font-weight: var(--font-weight-semibold) !important;
+    color: var(--text-secondary) !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: var(--space-2) !important;
+}
+
+/* Metric value styling */
+.stMetric [data-testid="stMetricValue"] {
+    font-size: 2rem !important;
+    font-weight: var(--font-weight-extrabold) !important;
+    color: var(--primary) !important;
+    line-height: 1.2 !important;
+    text-shadow: 0 2px 8px rgba(14, 165, 164, 0.2);
+}
+
+/* Metric delta styling */
+.stMetric [data-testid="stMetricDelta"] {
+    font-size: 0.8rem !important;
+    font-weight: var(--font-weight-medium) !important;
+    color: var(--text-muted) !important;
+    margin-top: var(--space-2) !important;
+}
+
+/* ============================================
+   7. BUTTON SYSTEM
+   ============================================ */
+.stButton > button {
+    background: linear-gradient(135deg, 
+        rgba(14, 165, 164, 0.1) 0%, 
+        rgba(14, 165, 164, 0.05) 100%
+    ) !important;
+    color: var(--primary) !important;
+    border: 1.5px solid var(--border) !important;
+    border-radius: var(--radius-lg) !important;
+    padding: var(--space-3) var(--space-6) !important;
+    font-weight: var(--font-weight-semibold) !important;
+    font-size: 0.95rem !important;
+    letter-spacing: 0.01em;
+    transition: all var(--transition-base) !important;
+    box-shadow: var(--shadow-sm) !important;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Button shine effect */
+.stButton > button::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    transform: translate(-50%, -50%);
+    transition: width var(--transition-slow), height var(--transition-slow);
+}
+
+.stButton > button:hover::after {
+    width: 300px;
+    height: 300px;
+}
+
+.stButton > button:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg) !important;
+    border-color: var(--primary) !important;
+    background: linear-gradient(135deg, 
+        rgba(14, 165, 164, 0.15) 0%, 
+        rgba(14, 165, 164, 0.1) 100%
+    ) !important;
+}
+
+.stButton > button:active {
+    transform: translateY(0);
+}
+
+/* Primary button variant */
+.stButton > button[kind="primary"] {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark)) !important;
+    color: white !important;
+    border: none !important;
+}
+
+.stButton > button[kind="primary"]:hover {
+    background: linear-gradient(135deg, var(--primary-light), var(--primary)) !important;
+    box-shadow: 0 8px 24px rgba(14, 165, 164, 0.4) !important;
+}
+
+/* ============================================
+   8. SECTION CONTAINERS
+   ============================================ */
+.header-section {
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.9) 0%, 
+        rgba(255, 255, 255, 0.7) 100%
+    );
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-2xl);
+    padding: var(--space-8);
+    margin: var(--space-6) 0;
+    box-shadow: var(--shadow-md);
+    position: relative;
+}
+
+.section-title {
+    font-size: 1.25rem !important;
+    font-weight: var(--font-weight-bold) !important;
+    color: var(--primary) !important;
+    margin-bottom: var(--space-4) !important;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.section-title::before {
+    content: '';
+    width: 4px;
+    height: 24px;
+    background: linear-gradient(180deg, var(--primary), var(--secondary));
+    border-radius: var(--radius-full);
+}
+
+/* ============================================
+   9. DATA VISUALIZATION ENHANCEMENTS
+   ============================================ */
+/* Chart container */
+.stPlotlyChart {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-xl);
+    padding: var(--space-4);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border);
+    margin: var(--space-4) 0;
+}
+
+/* Dataframe styling */
+.stDataFrame {
+    border-radius: var(--radius-lg) !important;
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border) !important;
+}
+
+.stDataFrame table {
+    font-size: 0.9rem;
+}
+
+.stDataFrame thead tr th {
+    background: linear-gradient(135deg, 
+        rgba(14, 165, 164, 0.1) 0%, 
+        rgba(14, 165, 164, 0.05) 100%
+    ) !important;
+    color: var(--text-primary) !important;
+    font-weight: var(--font-weight-semibold) !important;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    padding: var(--space-4) !important;
+    border-bottom: 2px solid var(--border) !important;
+}
+
+.stDataFrame tbody tr {
+    transition: background-color var(--transition-fast);
+}
+
+.stDataFrame tbody tr:hover {
+    background: rgba(14, 165, 164, 0.03) !important;
+}
+
+.stDataFrame tbody tr td {
+    padding: var(--space-3) var(--space-4) !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
+}
+
+/* ============================================
+   10. EXPANDER STYLING
+   ============================================ */
+.stExpander {
+    background: var(--bg-secondary) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-lg) !important;
+    box-shadow: var(--shadow-sm) !important;
+    margin: var(--space-4) 0 !important;
+    overflow: hidden;
+}
+
+.stExpander summary {
+    padding: var(--space-4) !important;
+    font-weight: var(--font-weight-semibold) !important;
+    color: var(--text-primary) !important;
+    background: linear-gradient(135deg, 
+        rgba(14, 165, 164, 0.05) 0%, 
+        transparent 100%
+    );
+    transition: all var(--transition-base);
+}
+
+.stExpander summary:hover {
+    background: linear-gradient(135deg, 
+        rgba(14, 165, 164, 0.1) 0%, 
+        rgba(14, 165, 164, 0.05) 100%
+    );
+}
+
+.stExpander[open] summary {
+    border-bottom: 1px solid var(--border);
+}
+
+/* ============================================
+   11. INPUT FIELDS
+   ============================================ */
+.stTextInput > div > div > input,
+.stSelectbox > div > div > select,
+.stMultiSelect > div > div > div {
+    border-radius: var(--radius-md) !important;
+    border: 1.5px solid var(--border) !important;
+    padding: var(--space-3) !important;
+    font-size: 0.95rem !important;
+    transition: all var(--transition-base) !important;
+    background: var(--bg-secondary) !important;
+}
+
+.stTextInput > div > div > input:focus,
+.stSelectbox > div > div > select:focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 3px rgba(14, 165, 164, 0.1) !important;
+    outline: none !important;
+}
+
+/* ============================================
+   12. TAB STYLING
+   ============================================ */
+.stTabs [data-baseweb="tab-list"] {
+    gap: var(--space-2);
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 0;
+}
+
+.stTabs [data-baseweb="tab"] {
+    padding: var(--space-3) var(--space-6) !important;
+    border-radius: var(--radius-md) var(--radius-md) 0 0 !important;
+    color: var(--text-secondary) !important;
+    font-weight: var(--font-weight-medium) !important;
+    transition: all var(--transition-base) !important;
+    border: none !important;
+    background: transparent !important;
+}
+
+.stTabs [data-baseweb="tab"]:hover {
+    background: rgba(14, 165, 164, 0.05) !important;
+    color: var(--primary) !important;
+}
+
+.stTabs [data-baseweb="tab"][aria-selected="true"] {
+    color: var(--primary) !important;
+    font-weight: var(--font-weight-bold) !important;
+    background: linear-gradient(135deg, 
+        rgba(14, 165, 164, 0.1) 0%, 
+        rgba(14, 165, 164, 0.05) 100%
+    ) !important;
+    border-bottom: 3px solid var(--primary) !important;
+}
+
+/* ============================================
+   13. BADGES & PILLS
+   ============================================ */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: var(--font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.status-badge.live {
+    background: rgba(239, 68, 68, 0.1);
+    color: #DC2626;
+}
+
+.status-badge.sample {
+    background: rgba(34, 197, 94, 0.1);
+    color: #16A34A;
+}
+
+/* ============================================
+   14. LOADING STATES
+   ============================================ */
+.stSpinner > div {
+    border-color: var(--primary) !important;
+    border-right-color: transparent !important;
+}
+
+/* ============================================
+   15. SCROLLBAR STYLING
+   ============================================ */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(14, 165, 164, 0.05);
+    border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(14, 165, 164, 0.3);
+    border-radius: var(--radius-full);
+    transition: background var(--transition-base);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(14, 165, 164, 0.5);
+}
+
+/* ============================================
+   16. RESPONSIVE ADJUSTMENTS
+   ============================================ */
+@media (max-width: 768px) {
+    .main .block-container {
+        padding-left: var(--space-4) !important;
+        padding-right: var(--space-4) !important;
     }
     
-    /* Logo styles */
-    .logo-container {
-        display: flex;
-        align-items: center;
-        gap: 20px;
-        padding: 20px 0;
-        margin-bottom: 30px;
-    }
-    
-    .logo-image {
-        width: 80px;
-        height: 80px;
-        filter: drop-shadow(0 0 10px rgba(6,141,157,0.3));
-    }
-    
-    .logo-text {
-        display: flex;
-        flex-direction: column;
+    h1 {
+        font-size: 2rem !important;
     }
     
     .logo-title {
-        font-size: 2.5rem !important;
-        font-weight: 800;
-        margin: 0 !important;
-        background: linear-gradient(90deg, #068D9D, #3C3744);
-        -webkit-background-clip: text;
-        background-clip: text;
-        color: transparent;
-        text-shadow: 0 0 20px rgba(6,141,157,0.2);
+        font-size: 1.75rem !important;
     }
     
-    .logo-tagline {
-        font-size: 1.1rem;
-        color: #3C3744;
-        margin-top: 5px;
-        font-weight: 400;
+    .header-section {
+        padding: var(--space-6);
     }
+}
 
-    /* Animated gradient background */
-    html, body, .stApp {
-        height: 100%;
-        background: radial-gradient(circle at 10% 10%, rgba(6,141,157,0.06), transparent 10%),
-                                radial-gradient(circle at 90% 90%, rgba(60,55,68,0.03), transparent 10%),
-                                linear-gradient(180deg, #F4F7F5, #F4F7F5);
-        color: #3C3744 !important;
-        font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+/* ============================================
+   17. ANIMATIONS
+   ============================================ */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
     }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
 
-    /* Animated gradient title */
-    h1 {
-        font-size: 2.2rem !important;
-        margin: 0 !important;
-        font-weight: 800;
-        background: linear-gradient(90deg, #068D9D, #3C3744, #068D9D);
-        -webkit-background-clip: text;
-        background-clip: text;
-        color: transparent;
-        animation: hue 6s linear infinite;
-        text-align: right !important;
+@keyframes slideIn {
+    from {
+        transform: translateX(-20px);
+        opacity: 0;
     }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
 
-    @keyframes hue{ 0%{filter: hue-rotate(0deg);}50%{filter: hue-rotate(40deg);}100%{filter: hue-rotate(0deg);} }
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.8;
+    }
+}
 
-    /* Glass KPI cards */
-    .stMetric, .stMetric > div {
-        background: linear-gradient(135deg, rgba(6,141,157,0.04), rgba(60,55,68,0.02)) !important;
-        border: 1px solid rgba(6,141,157,0.2) !important;
-        box-shadow: 0 8px 30px rgba(0,0,0,0.1) inset, 0 8px 24px rgba(6,141,157,0.06);
-        border-radius: 12px !important;
-        padding: 10px !important;
-        color: #3C3744 !important;
-    }
+/* Apply animations */
+.stMetric {
+    animation: fadeIn var(--transition-slow) ease-out;
+}
 
-    /* Bright neon values for metric numbers */
-    .stMetric .value, .stMetric .stMetricValue {
-        color: #068D9D !important;
-        font-weight: 800 !important;
-        text-shadow: 0 6px 18px rgba(6,141,157,0.12);
-    }
+.modern-card {
+    animation: slideIn var(--transition-slow) ease-out;
+}
 
-    /* Make buttons look like neon pills */
-    .stButton>button {
-        background: linear-gradient(90deg, rgba(6,141,157,0.12), rgba(60,55,68,0.12));
-        color: #068D9D !important;
-        border: 1px solid rgba(6,141,157,0.25) !important;
-        padding: 10px 14px !important;
-        border-radius: 999px !important;
-        box-shadow: 0 8px 30px rgba(6,141,157,0.08);
-        transition: transform 0.12s ease, box-shadow 0.12s ease;
-    }
-    .stButton>button:hover{ transform: translateY(-2px); box-shadow: 0 16px 46px rgba(6,141,157,0.15); }
+/* ============================================
+   18. UTILITY CLASSES
+   ============================================ */
+.glass-effect {
+    background: rgba(255, 255, 255, 0.8) !important;
+    backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
 
-    /* Sidebar styling */
-    .css-1d391kg .css-1lcbmhc { background: linear-gradient(180deg, rgba(6,141,157,0.08), rgba(60,55,68,0.06)); }
-    .sidebar .stMarkdown, .sidebar .stTextInput { color: #3C3744 !important; }
+.gradient-border {
+    position: relative;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
 
-    /* Glass panels for main content blocks */
-    .element-container, .block-container .stExpander {
-        background: linear-gradient(180deg, rgba(6,141,157,0.04), rgba(60,55,68,0.02));
-        border: 1px solid rgba(6,141,157,0.15);
-        border-radius: 10px;
-        padding: 12px;
-    }
+.gradient-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 2px;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+}
 
-    /* Tables */
-    .stTable td, .stTable th { color: #3C3744 !important; }
-
-    /* Footer */
-    footer { opacity: 0.8; color: #068D9D !important; }
-    
-    /* Web Scraper Section Styling */
-    .web-scraper-container {
-        background: linear-gradient(135deg, rgba(6,141,157,0.08), rgba(60,55,68,0.06));
-        border: 1px solid rgba(6,141,157,0.25);
-        border-radius: 12px;
-        padding: 20px;
-        margin: 15px 0;
-        backdrop-filter: blur(10px);
-    }
-    
-    .web-scraper-title {
-        font-size: 1.3em;
-        font-weight: 600;
-        color: #068D9D;
-        margin-bottom: 15px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    
-    .web-data-card {
-        background: linear-gradient(135deg, rgba(6,141,157,0.05), rgba(60,55,68,0.03));
-        border: 1px solid rgba(6,141,157,0.15);
-        border-radius: 8px;
-        padding: 15px;
-        margin: 10px 0;
-        transition: all 0.3s ease;
-    }
-    
-    .web-data-card:hover {
-        border-color: rgba(6,141,157,0.35);
-        box-shadow: 0 4px 12px rgba(6,141,157,0.1);
-    }
-    
-    /* Tab styling */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-    }
-    
-    .stTabs [data-baseweb="tab"] {
-        padding: 8px 16px;
-        border-radius: 6px;
-        color: #3C3744 !important;
-    }
-    
-    .stTabs [aria-selected="true"] {
-        border-bottom: 2px solid #068D9D;
-    }
+.shadow-glow-primary {
+    box-shadow: 0 0 30px rgba(14, 165, 164, 0.3) !important;
+}
 
 </style>
 """, unsafe_allow_html=True)
