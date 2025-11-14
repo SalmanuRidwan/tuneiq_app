@@ -1053,17 +1053,6 @@ def main():
     image_base64 = get_base64_image("./assets/logo.png")
 
     # Main header with logo and title
-    # st.markdown(f"""
-    # <div class="logo-container" style="display:flex; align-items:left; gap:20px; margin-bottom:20px;">
-    #     <img src="data:image/png;base64,{image_base64}" 
-    #         alt="TuneIQ Logo" 
-    #         style="width:100px; height:100px; object-fit:contain;">
-    #     <div class="logo-text">
-    #         <h1 class="logo-title" style="margin-left: 0px; align-items: left; color:#00FFC2;">TuneIQ Solution</h1>
-    #         <div class="logo-tagline" style="font-size:1.5em; color:#ccc;">Making Nigeria's music economy visible through data-driven analytics.</div>
-    #     </div>
-    # </div>
-    # """, unsafe_allow_html=True)
     st.markdown(f"""
 <style>
 /* higher specificity + important to override theme styles */
@@ -1429,65 +1418,6 @@ def main():
     selected_months = st.session_state.selected_months
     drill_country = header_country
 
-    # if st.session_state.show_filters:
-    #     with st.container():
-    #         st.markdown('<div class="header-section">', unsafe_allow_html=True)
-    #         st.markdown('<p class="section-title">Filters & Analysis</p>', unsafe_allow_html=True)
-            
-    #         filter_cols = st.columns(2)
-    #         with filter_cols[0]:
-    #             # Present human-friendly month labels (e.g., Jan 2025) while storing the underlying month codes
-    #             def _format_month_label(m: str) -> str:
-    #                 try:
-    #                     if '-' in m:
-    #                         parts = m.split('-')
-    #                         year = int(parts[0]); month = int(parts[1])
-    #                         return pd.to_datetime(f"{year}-{month:02d}-01").strftime('%b %Y')
-    #                     return m
-    #                 except Exception:
-    #                     return m
-
-    #             month_display_map = {m: _format_month_label(m) for m in months}
-    #             month_display_list = [month_display_map[m] for m in months]
-
-    #             # Defaults: convert stored selected_months (which are codes) to display labels
-    #             default_display = [month_display_map.get(m, m) for m in st.session_state.get('selected_months', months)]
-
-    #             selected_display = st.multiselect(
-    #                 "Time Period",
-    #                 month_display_list,
-    #                 default=default_display
-    #             )
-
-    #             # Convert back to the underlying month codes and store
-    #             selected_months = [orig for orig, label in month_display_map.items() if label in selected_display]
-    #             if not selected_months:
-    #                 # fallback to all months when user clears selection
-    #                 selected_months = months
-    #             st.session_state.selected_months = selected_months
-    #         with filter_cols[1]:
-    #             # Artist selector moved into Filters & Analysis (authoritative artist for the dashboard)
-    #             st.selectbox(
-    #                 "Select Artist",
-    #                 options=NIGERIAN_ARTISTS,
-    #                 index=NIGERIAN_ARTISTS.index('Burna Boy') if 'Burna Boy' in NIGERIAN_ARTISTS else 0,
-    #                 key="filter_artist",
-    #                 help="Choose a Nigerian artist to analyze"
-    #             )
-
-    #             header_country = st.selectbox(
-    #                 "Country",
-    #                 country_options,
-    #                 key="header_country"
-    #             )
-                
-    #         st.markdown('</div>', unsafe_allow_html=True)
-    
-    # # Sidebar mirror of filters (synced with header)
-    # # st.sidebar.header("Filters & Drilldown")
-    # selected_platforms = header_platforms  # Use header selection
-    # selected_months = header_months  # Use header selection
-    # drill_country = header_country  # Use header selection
 
     # If header-based selections are not present (filters hidden), fall back to session_state selections
     if not selected_months or not isinstance(selected_months, list):
