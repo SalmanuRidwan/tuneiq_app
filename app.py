@@ -5,6 +5,7 @@ Streamlit dashboard for music streaming analytics and economic impact analysis.
 
 import streamlit as st
 import plotly.express as px
+import plotly.graph_objects as go
 import pandas as pd
 from typing import Dict, Optional
 import json
@@ -1035,6 +1036,9 @@ def render_charts(df: pd.DataFrame, selected_platforms=None):
 
         st.dataframe(display_df[['country', 'streams', 'expected_revenue_ngn', 'actual_revenue_ngn', 'revenue_gap']])
 
+    render_revenue_gap_visualization(country_impact, top10)
+
+
 def main():
     """Main dashboard layout and logic."""
     # Initialize use_live flag
@@ -1673,6 +1677,212 @@ def main():
         display_economic_impact_section()
     else:
         st.warning("⚠️ AI Economic Impact module not loaded. Check imports.")
+
+# helper function forvisualization
+def render_revenue_gap_visualization(country_impact, top10):
+    """
+    Render an engaging revenue gap analysis visualization
+    
+    Args:
+        country_impact: DataFrame with country-level aggregated data
+        top10: DataFrame with top 10 countries by impact
+    """
+    
+    # Option 1: Grouped Bar Chart (Recommended for clarity)
+    st.subheader("Revenue Gap Analysis (Top 10 Impact Countries)")
+    
+    # Prepare data for visualization
+    viz_data = top10.copy()
+    
+    # Create grouped bar chart
+    fig_revenue = go.Figure()
+    
+    # Add Expected Revenue bars
+    fig_revenue.add_trace(go.Bar(
+        name='Expected Revenue',
+        x=viz_data['country'],
+        y=viz_data['expected_revenue_ngn'],
+        marker=dict(
+            color='#0EA5A4',  # Your primary teal color
+            line=dict(color='#0c8483', width=1)
+        ),
+        text=viz_data['expected_revenue_ngn'].apply(lambda x: f"₦{x:,.0f}"),
+        textposition='outside',
+        textfont=dict(size=10),
+        hovertemplate='<b>%{x}</b><br>Expected: ₦%{y:,.0f}<extra></extra>'
+    ))
+    
+    # Add Actual Revenue bars
+    fig_revenue.add_trace(go.Bar(
+        name='Actual Revenue',
+        x=viz_data['country'],
+        y=viz_data['actual_revenue_ngn'],
+        marker=dict(
+            color='#F59E0B',  # Your accent orange color
+            line=dict(color='#d97706', width=1)
+        ),
+        text=viz_data['actual_revenue_ngn'].apply(lambda x: f"₦{x:,.0f}"),
+        textposition='outside',
+        textfont=dict(size=10),
+        hovertemplate='<b>%{x}</b><br>Actual: ₦%{y:,.0f}<extra></extra>'
+    ))
+    
+    # Update layout for modern look
+    fig_revenue.update_layout(
+        title={
+            'text': 'Expected vs Actual Revenue by Country',
+            'y': 0.95,
+            'x': 0.5,
+            'xanchor': 'center',
+            'yanchor': 'top',
+            'font': dict(size=18, color='#1F213A', weight='bold')
+        },
+        xaxis=dict(
+            title='Country',
+            tickangle=-45,
+            gridcolor='rgba(14, 165, 164, 0.1)',
+            showgrid=True
+        ),
+        yaxis=dict(
+            title='Revenue (NGN)',
+            gridcolor='rgba(14, 165, 164, 0.1)',
+            showgrid=True
+        ),
+        barmode='group',
+        template='plotly_white',
+        hovermode='x unified',
+        plot_bgcolor='rgba(244, 247, 245, 0.5)',
+        paper_bgcolor='white',
+        font=dict(family='Inter, sans-serif', color='#1F213A'),
+        legend=dict(
+            orientation='h',
+            yanchor='bottom',
+            y=1.02,
+            xanchor='right',
+            x=1,
+            bgcolor='rgba(255, 255, 255, 0.9)',
+            bordercolor='rgba(14, 165, 164, 0.2)',
+            borderwidth=1
+        ),
+        margin=dict(t=100, b=100),
+        height=500
+    )
+    
+    st.plotly_chart(fig_revenue, use_container_width=True)
+    
+    # Option 2: Revenue Gap Waterfall Chart (Shows the gap more dramatically)
+    st.markdown("### Revenue Gap Breakdown")
+    
+    # Calculate total gaps
+    total_expected = viz_data['expected_revenue_ngn'].sum()
+    total_actual = viz_data['actual_revenue_ngn'].sum()
+    total_gap = total_expected - total_actual
+    
+    # Create waterfall data
+    waterfall_data = []
+    cumulative = 0
+    
+    for _, row in viz_data.iterrows():
+        gap = row['expected_revenue_ngn'] - row['actual_revenue_ngn']
+        waterfall_data.append({
+            'country': row['country'],
+            'gap': gap,
+            'cumulative': cumulative + gap
+        })
+        cumulative += gap
+    
+    waterfall_df = pd.DataFrame(waterfall_data)
+    
+    # Create waterfall chart
+    fig_waterfall = go.Figure()
+    
+    # Add bars for each country's gap
+    colors = ['#DC2626' if gap > 0 else '#16A34A' 
+              for gap in waterfall_df['gap']]
+    
+    fig_waterfall.add_trace(go.Bar(
+        x=waterfall_df['country'],
+        y=waterfall_df['gap'],
+        marker=dict(
+            color=colors,
+            line=dict(color='rgba(0,0,0,0.3)', width=1)
+        ),
+        text=waterfall_df['gap'].apply(lambda x: f"₦{x:,.0f}"),
+        textposition='outside',
+        hovertemplate='<b>%{x}</b><br>Gap: ₦%{y:,.0f}<extra></extra>',
+        name='Revenue Gap'
+    ))
+    
+    fig_waterfall.update_layout(
+        title={
+            'text': f'Revenue Gap by Country (Total Gap: ₦{total_gap:,.0f})',
+            'y': 0.95,
+            'x': 0.5,
+            'xanchor': 'center',
+            'yanchor': 'top'
+        },
+        xaxis=dict(
+            title='Country',
+            tickangle=-45,
+            gridcolor='rgba(14, 165, 164, 0.1)'
+        ),
+        yaxis=dict(
+            title='Revenue Gap (NGN)',
+            gridcolor='rgba(14, 165, 164, 0.1)',
+            zeroline=True,
+            zerolinecolor='rgba(14, 165, 164, 0.3)',
+            zerolinewidth=2
+        ),
+        template='plotly_white',
+        plot_bgcolor='rgba(244, 247, 245, 0.5)',
+        paper_bgcolor='white',
+        height=400,
+        showlegend=False
+    )
+    
+    st.plotly_chart(fig_waterfall, use_container_width=True)
+    
+    # Option 3: Heatmap for detailed comparison
+    with st.expander("📊 Detailed Revenue Comparison Matrix"):
+        # Prepare heatmap data
+        heatmap_data = viz_data[['country', 'expected_revenue_ngn', 
+                                  'actual_revenue_ngn', 'revenue_gap']].copy()
+        
+        # Normalize for color scale
+        heatmap_data['gap_percentage'] = (
+            (heatmap_data['revenue_gap'] / heatmap_data['expected_revenue_ngn']) * 100
+        )
+        
+        # Create heatmap
+        fig_heatmap = go.Figure(data=go.Heatmap(
+            z=[heatmap_data['expected_revenue_ngn'], 
+               heatmap_data['actual_revenue_ngn'],
+               heatmap_data['revenue_gap']],
+            x=heatmap_data['country'],
+            y=['Expected Revenue', 'Actual Revenue', 'Revenue Gap'],
+            colorscale=[
+                [0, '#F59E0B'],      # Orange for low
+                [0.5, '#0EA5A4'],    # Teal for medium
+                [1, '#7C3AED']       # Purple for high
+            ],
+            text=[[f"₦{val:,.0f}" for val in heatmap_data['expected_revenue_ngn']],
+                  [f"₦{val:,.0f}" for val in heatmap_data['actual_revenue_ngn']],
+                  [f"₦{val:,.0f}" for val in heatmap_data['revenue_gap']]],
+            texttemplate='%{text}',
+            textfont=dict(size=10),
+            hovertemplate='%{y}<br>%{x}: %{text}<extra></extra>',
+            colorbar=dict(title='Amount (NGN)')
+        ))
+        
+        fig_heatmap.update_layout(
+            title='Revenue Comparison Heatmap',
+            xaxis=dict(tickangle=-45),
+            template='plotly_white',
+            height=300
+        )
+        
+        st.plotly_chart(fig_heatmap, use_container_width=True)
+        
 
 if __name__ == "__main__":
     main()
