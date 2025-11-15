@@ -9,6 +9,7 @@ import streamlit as st
 import pandas as pd
 from typing import Optional, Dict
 import importlib
+import json
 
 # Import predictor and data pipeline
 try:
@@ -140,8 +141,8 @@ def display_economic_impact_section():
     4. Display predicted GDP contribution and jobs created in modern KPI cards
     """
     
-    # Section header
-    st.markdown('<div class="section-header">🎵 Economic Impact & Job Creation</div>', unsafe_allow_html=True)
+    # Section header (renamed)
+    st.markdown('<div class="section-header">🤖 AI  Economic Impact & Job Creation Estimator</div>', unsafe_allow_html=True)
     st.markdown(
         "Use AI to estimate GDP contribution and job creation from streaming data. "
         "Select a data source and artist below."
@@ -156,7 +157,7 @@ def display_economic_impact_section():
     with col1:
         data_source = st.radio(
             "📊 Select Data Source",
-            options=["Sample", "Spotify", "YouTube", "Web Scraper"],
+            options=["Sample", "Spotify", "Apple Music", "YouTube", "Web Scraper"],
             horizontal=False,
             help="Choose where to fetch data for predictions"
         )
@@ -200,8 +201,11 @@ def display_economic_impact_section():
                         st.warning(f"⚠️ No web data found for {artist_name}. Using sample data instead.")
                         df = load_sample_data()
                 else:
-                    # Spotify or YouTube require API credentials
-                    source_lower = data_source.lower()
+                    # Spotify, Apple Music, or YouTube require API credentials
+                    if data_source == "Apple Music":
+                        source_lower = "apple_music"
+                    else:
+                        source_lower = data_source.lower()
                     df = fetch_live_data(source=source_lower, artist_name=artist_name)
                     if df.empty:
                         st.warning(
@@ -232,7 +236,17 @@ def display_economic_impact_section():
                         """)
                 else:
                     st.success(f"✅ Predictions generated for {artist_name}")
-                    
+
+                    # Show estimation/auto-scale notice when relevant
+                    if predictions.get("estimation"):
+                        st.warning(
+                            "Estimation mode: model unavailable — values shown are heuristic estimates."
+                        )
+                    elif predictions.get("auto_scaled"):
+                        st.info(
+                            "Note: model output was auto-scaled for display due to high stream volume."
+                        )
+
                     # Display KPI metrics in modern cards
                     st.markdown('<div class="main-card">', unsafe_allow_html=True)
                     st.markdown("####  AI Predicted Impact Metrics")
@@ -275,6 +289,29 @@ def display_economic_impact_section():
                     st.markdown('<div class="main-card">', unsafe_allow_html=True)
                     st.markdown("#### Input Data Summary")
                     
+                    # Add export buttons for data
+                    exp_col1, exp_col2, exp_col3 = st.columns([2, 1, 1])
+                    with exp_col2:
+                        csv_data = df.to_csv(index=False)
+                        st.download_button(
+                            label="📥 Export (CSV)",
+                            data=csv_data,
+                            file_name=f"{artist_name}_{data_source}_data.csv",
+                            mime="text/csv",
+                            use_container_width=True,
+                            key="export_data_csv"
+                        )
+                    with exp_col3:
+                        json_data = df.to_json(orient='records', indent=2)
+                        st.download_button(
+                            label="📥 Export (JSON)",
+                            data=json_data,
+                            file_name=f"{artist_name}_{data_source}_data.json",
+                            mime="application/json",
+                            use_container_width=True,
+                            key="export_data_json"
+                        )
+                    
                     summary_cols = st.columns(3)
                     
                     with summary_cols[0]:
@@ -309,7 +346,95 @@ def display_economic_impact_section():
                     with st.expander("📋 Data Preview", expanded=False):
                         display_cols = ['artist', 'streams', 'country', 'platform', 'month']
                         available_cols = [col for col in display_cols if col in df.columns]
-                        st.dataframe(df[available_cols].head(10), use_container_width=True)
+                        preview_df = df[available_cols].head(10)
+                        
+                        # Display table with export options
+                        col_table, col_export = st.columns([4, 1])
+                        with col_table:
+                                                        # Toolbar above the preview table (Font Awesome icons)
+                                                        csv_text = preview_df.to_csv(index=False)
+                                                        csv_js = json.dumps(csv_text)
+                                                        template = """
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+.tuneiq-toolbar{position:relative;margin-bottom:8px}
+.tuneiq-toolbar .toolbar{position:relative;display:inline-flex;gap:6px;right:0;float:right}
+.tuneiq-toolbar .icon{width:34px;height:34px;border-radius:6px;background:rgba(255,255,255,0.96);border:1px solid rgba(0,0,0,0.06);box-shadow:0 1px 2px rgba(0,0,0,0.06);display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0.95;font-size:14px}
+.tuneiq-toolbar .icon:hover{transform:translateY(-1px);opacity:1}
+.tuneiq-toolbar h4{margin:0;padding:6px 0;font-weight:600}
+.tuneiq-toolbar:after{content:'';display:block;clear:both}
+</style>
+<div class='tuneiq-toolbar' data-csv={CSV_JS} data-filename='{FILE_NAME}'><h4>📋 Data Preview</h4>
+    <div class='toolbar' aria-label='table-toolbar'>
+        <button class='icon' title='Screenshot' onclick='tui_screenshot(this)'><i class='fa fa-camera'></i></button>
+        <button class='icon' title='Zoom Area' onclick='tui_zoom_area(this)'><i class='fa fa-vector-square'></i></button>
+        <button class='icon' title='Zoom In' onclick='tui_scale(this,1.2)'><i class='fa fa-search-plus'></i></button>
+        <button class='icon' title='Zoom Out' onclick='tui_scale(this,0.8)'><i class='fa fa-search-minus'></i></button>
+        <button class='icon' title='Fullscreen' onclick='tui_fullscreen(this)'><i class='fa fa-expand'></i></button>
+        <button class='icon' title='Download CSV' onclick='tui_download(this)'><i class='fa fa-download'></i></button>
+    </div>
+</div>
+
+<script>
+function tui_find_table(toolbarEl){
+        var node = toolbarEl.nextElementSibling;
+        while(node){
+                try{
+                        var tbl = node.querySelector && node.querySelector('table');
+                        if(tbl) return tbl;
+                }catch(e){}
+                node = node.nextElementSibling;
+        }
+        return null;
+}
+function tui_screenshot(btn){
+    var toolbar = btn.closest('.tuneiq-toolbar');
+    var tbl = tui_find_table(toolbar);
+    if(!tbl){alert('Table not found for screenshot'); return;}
+    if(typeof html2canvas === 'undefined'){
+        var s=document.createElement('script');
+        s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+        s.onload=function(){ html2canvas(tbl).then(function(c){ var a=document.createElement('a'); a.href=c.toDataURL(); a.download='table_screenshot.png'; a.click(); }); };
+        document.body.appendChild(s);
+    }else{
+        html2canvas(tbl).then(function(c){ var a=document.createElement('a'); a.href=c.toDataURL(); a.download='table_screenshot.png'; a.click(); });
+    }
+}
+function tui_scale(btn,factor){
+    var toolbar = btn.closest('.tuneiq-toolbar');
+    var tbl = tui_find_table(toolbar);
+    if(!tbl){alert('Table not found for zoom'); return;}
+    var cur = tbl.style.transform.match(/scale\\(([^)]+)\\)/);
+    var val = cur ? parseFloat(cur[1]) : 1;
+    val = Math.max(0.25, Math.min(5, val * factor));
+    tbl.style.transformOrigin = '0 0';
+    tbl.style.transform = 'scale('+val+')';
+}
+function tui_zoom_area(btn){
+    var toolbar = btn.closest('.tuneiq-toolbar');
+    var tbl = tui_find_table(toolbar);
+    if(!tbl){alert('Table not found for zoom area'); return;}
+    if(tbl.classList.contains('tui-zoom-area')){ tbl.classList.remove('tui-zoom-area'); tbl.style.transform='scale(1)'; tbl.style.maxHeight=''; tbl.style.overflow=''; }
+    else{ tbl.classList.add('tui-zoom-area'); tbl.style.transform='scale(1.25)'; tbl.style.maxHeight='600px'; tbl.style.overflow='auto'; }
+}
+function tui_fullscreen(btn){ var toolbar = btn.closest('.tuneiq-toolbar'); var tbl = tui_find_table(toolbar); if(!tbl){alert('Table not found for fullscreen'); return;} var w = window.open('','_blank'); w.document.write('<html><head><title>Table Fullscreen</title></head><body>'+tbl.outerHTML+'</body></html>'); w.document.close(); }
+function tui_download(btn){ var toolbar = btn.closest('.tuneiq-toolbar'); var csv = toolbar.getAttribute('data-csv'); var filename = toolbar.getAttribute('data-filename') || 'table.csv'; if(!csv || csv==='null'){ alert('No CSV available for this table'); return; } var a = document.createElement('a'); a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv); a.download = filename; a.click(); }
+</script>
+"""
+                                                        toolbar_html = template.replace('{CSV_JS}', csv_js).replace('{FILE_NAME}', f"{artist_name}_preview.csv")
+                                                        st.markdown(toolbar_html, unsafe_allow_html=True)
+                                                        st.dataframe(preview_df, use_container_width=True)
+                        with col_export:
+                            # Quick export button for preview
+                            preview_csv = preview_df.to_csv(index=False)
+                            st.download_button(
+                                label="📥 Export Preview",
+                                data=preview_csv,
+                                file_name=f"{artist_name}_preview.csv",
+                                mime="text/csv",
+                                use_container_width=True,
+                                key="export_preview_csv"
+                            )
             
             except Exception as e:
                 st.error(f"❌ Error during prediction: {str(e)}")
@@ -318,34 +443,4 @@ def display_economic_impact_section():
         st.warning("⚠️ Please select an artist")
     
     # Add information box
-    st.markdown('<div class="main-card">', unsafe_allow_html=True)
-    with st.expander("ℹ️ About AI Economic Impact Predictions", expanded=False):
-        st.markdown("""
-        ### How It Works
-        TuneIQ uses a pre-trained machine learning model (`tuneiq_gdp_jobs_model.joblib`) 
-        to analyze streaming data and estimate:
-        
-        - **GDP Contribution (₦)**: Estimated direct economic value added to Nigeria's GDP
-        - **Jobs Created**: Estimated number of jobs supported by music streaming
-        
-        ### Data Sources
-        - **Sample**: Demonstration data for various artists
-        - **Spotify**: Live streaming data from Spotify API
-        - **YouTube**: Video view data from YouTube Analytics
-        - **Web Scraper**: Real-time trends from web sources
-        
-        ### Methodology
-        The model analyzes:
-        1. Total streams and platform diversity
-        2. Geographic distribution of streams
-        3. Historical streaming patterns
-        
-        ### Limitations
-        - Predictions are estimates based on available data
-        - Actual GDP impact depends on many external factors
-        - API data may be limited or incomplete for some artists
-        
-        ### Privacy
-        All data is processed locally and anonymized at the country level.
-        """)
-    st.markdown('</div>', unsafe_allow_html=True)
+    # About/Info expander removed as requested

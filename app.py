@@ -5,10 +5,10 @@ Streamlit dashboard for music streaming analytics and economic impact analysis.
 
 import streamlit as st
 import plotly.express as px
-import plotly.graph_objects as go
 import pandas as pd
 from typing import Dict, Optional
 import json
+import base64
 import sys
 import os
 import importlib
@@ -817,8 +817,282 @@ h3 {
     gap: 10px;
 }
 
+/* ============================================
+   CIRCULAR PROGRESS RINGS
+   ============================================ */
+.progress-ring-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    width: 140px;
+    height: 140px;
+    margin: 0 auto;
+}
+
+.progress-ring {
+    width: 140px;
+    height: 140px;
+}
+
+.progress-ring-circle {
+    transition: stroke-dashoffset 0.35s;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+}
+
+.progress-ring-background {
+    fill: none;
+    stroke: #E5E7EB;
+    stroke-width: 8;
+}
+
+.progress-ring-progress {
+    fill: none;
+    stroke-width: 8;
+    stroke-linecap: round;
+}
+
+.progress-ring-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    font-weight: 700;
+    font-size: 1.8rem;
+    color: #0EA5A4;
+}
+
+.progress-ring-label {
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.85rem;
+    color: #64748B;
+    white-space: nowrap;
+}
+
+/* ============================================
+   ENHANCED CARD STYLING WITH HOVER & GRADIENTS
+   ============================================ */
+.metric-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(14, 165, 164, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #0EA5A4, #10bfbd);
+}
+
+.metric-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.chart-card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(14, 165, 164, 0.1);
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+}
+
+.chart-card:hover {
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+}
+
+/* ============================================
+   STAT DISPLAY
+   ============================================ */
+.stat-label {
+    font-size: 0.9rem;
+    color: #64748B;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #0EA5A4;
+    margin: 12px 0;
+}
+
+.stat-change {
+    font-size: 0.85rem;
+    color: #10b981;
+    font-weight: 600;
+}
+
+/* ============================================
+   ANIMATION EFFECTS
+   ============================================ */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.animate-in {
+    animation: slideInUp 0.6s ease-out;
+}
+
 </style>
 """, unsafe_allow_html=True)
+
+
+def render_table_toolbar(title: str, df: Optional[pd.DataFrame] = None, file_name: str = "data.csv") -> None:
+        """Render a toolbar above tables using Font Awesome icons and embed JS behaviors.
+
+        Behavior implemented client-side (best-effort):
+        - Screenshot: captures the rendered table using html2canvas and downloads PNG
+        - Zoom Area: toggles a modest focused zoom (best-effort)
+        - Zoom In / Zoom Out: scales the found table element
+        - Fullscreen: opens a new window and writes the table HTML
+        - Download: downloads the CSV for the provided DataFrame
+
+        Note: Streamlit's DOM structure may vary; the script searches for the next <table>
+        sibling after the toolbar to apply actions. This is best-effort and works with
+        most `st.dataframe`/`st.table` outputs rendered directly after the toolbar.
+        """
+
+        csv_text = None
+        if df is not None:
+                csv_text = df.to_csv(index=False)
+                # JSON-encode to safely embed in JS
+                csv_js = json.dumps(csv_text)
+        else:
+                csv_js = 'null'
+
+        template = """
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+.tuneiq-toolbar{position:relative;margin-bottom:8px}
+.tuneiq-toolbar .toolbar{position:relative;display:inline-flex;gap:6px;right:0;float:right}
+.tuneiq-toolbar .icon{width:34px;height:34px;border-radius:6px;background:rgba(255,255,255,0.96);border:1px solid rgba(0,0,0,0.06);box-shadow:0 1px 2px rgba(0,0,0,0.06);display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0.95;font-size:14px}
+.tuneiq-toolbar .icon:hover{transform:translateY(-1px);opacity:1}
+.tuneiq-toolbar h4{margin:0;padding:6px 0;font-weight:600}
+.tuneiq-toolbar:after{content:'';display:block;clear:both}
+</style>
+<div class='tuneiq-toolbar' data-csv={CSV_JS} data-filename='{FILE_NAME}'><h4>{TITLE}</h4>
+    <div class='toolbar' aria-label='table-toolbar'>
+        <button class='icon' title='Screenshot' onclick='tui_screenshot(this)'><i class='fa fa-camera'></i></button>
+        <button class='icon' title='Zoom Area' onclick='tui_zoom_area(this)'><i class='fa fa-vector-square'></i></button>
+        <button class='icon' title='Zoom In' onclick='tui_scale(this,1.2)'><i class='fa fa-search-plus'></i></button>
+        <button class='icon' title='Zoom Out' onclick='tui_scale(this,0.8)'><i class='fa fa-search-minus'></i></button>
+        <button class='icon' title='Fullscreen' onclick='tui_fullscreen(this)'><i class='fa fa-expand'></i></button>
+        <button class='icon' title='Download CSV' onclick='tui_download(this)'><i class='fa fa-download'></i></button>
+    </div>
+</div>
+
+<script>
+function tui_find_table(toolbarEl){
+    var node = toolbarEl.nextElementSibling;
+    while(node){
+        try{
+            var tbl = node.querySelector && node.querySelector('table');
+            if(tbl) return tbl;
+        }catch(e){}
+        node = node.nextElementSibling;
+    }
+    return null;
+}
+
+function tui_screenshot(btn){
+    var toolbar = btn.closest('.tuneiq-toolbar');
+    var tbl = tui_find_table(toolbar);
+    if(!tbl){alert('Table not found for screenshot'); return;}
+    if(typeof html2canvas === 'undefined'){
+        var s=document.createElement('script');
+        s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+        s.onload=function(){ html2canvas(tbl).then(function(c){ var a=document.createElement('a'); a.href=c.toDataURL(); a.download='table_screenshot.png'; a.click(); }); };
+        document.body.appendChild(s);
+    }else{
+        html2canvas(tbl).then(function(c){ var a=document.createElement('a'); a.href=c.toDataURL(); a.download='table_screenshot.png'; a.click(); });
+    }
+}
+
+function tui_scale(btn,factor){
+    var toolbar = btn.closest('.tuneiq-toolbar');
+    var tbl = tui_find_table(toolbar);
+    if(!tbl){alert('Table not found for zoom'); return;}
+    var cur = tbl.style.transform.match(/scale\\(([^)]+)\\)/);
+    var val = cur ? parseFloat(cur[1]) : 1;
+    val = Math.max(0.25, Math.min(5, val * factor));
+    tbl.style.transformOrigin = '0 0';
+    tbl.style.transform = 'scale('+val+')';
+}
+
+function tui_zoom_area(btn){
+    var toolbar = btn.closest('.tuneiq-toolbar');
+    var tbl = tui_find_table(toolbar);
+    if(!tbl){alert('Table not found for zoom area'); return;}
+    // Simple toggle: set a modest focused zoom and overflow auto so user can pan
+    if(tbl.classList.contains('tui-zoom-area')){
+        tbl.classList.remove('tui-zoom-area'); tbl.style.transform='scale(1)'; tbl.style.maxHeight=''; tbl.style.overflow='';
+    }else{
+        tbl.classList.add('tui-zoom-area'); tbl.style.transform='scale(1.25)'; tbl.style.maxHeight='600px'; tbl.style.overflow='auto';
+    }
+}
+
+function tui_fullscreen(btn){
+    var toolbar = btn.closest('.tuneiq-toolbar');
+    var tbl = tui_find_table(toolbar);
+    if(!tbl){alert('Table not found for fullscreen'); return;}
+    var w = window.open('','_blank');
+    w.document.write('<html><head><title>Table Fullscreen</title></head><body>'+tbl.outerHTML+'</body></html>');
+    w.document.close();
+}
+
+function tui_download(btn){
+    var toolbar = btn.closest('.tuneiq-toolbar');
+    var csv = toolbar.getAttribute('data-csv');
+    var filename = toolbar.getAttribute('data-filename') || 'table.csv';
+    if(!csv || csv==='null'){ alert('No CSV available for this table'); return; }
+    var a = document.createElement('a');
+    a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+    a.download = filename;
+    a.click();
+}
+</script>
+"""
+
+        toolbar_html = template.replace('{CSV_JS}', csv_js).replace('{FILE_NAME}', file_name).replace('{TITLE}', title)
+
+        st.markdown(toolbar_html, unsafe_allow_html=True)
+
 
 def load_data(use_live: bool = False) -> pd.DataFrame:
     """Load data based on mode selection.
@@ -855,43 +1129,134 @@ def format_ngn(amount: float) -> str:
     return f"₦{amount:,.2f}"
 
 def render_kpi_cards(df: pd.DataFrame, impact_metrics: Dict):
-    """Render KPI metric cards in the dashboard."""
-    cols = st.columns(4)
+    """Render enhanced KPI metric cards with modern design."""
+    # Add enhanced CSS for KPI cards
+    kpi_css = """
+    <style>
+    .kpi-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 24px;
+        margin: 30px 0 40px 0;
+        padding: 0;
+        width: 100%;
+    }
     
-    # Total Streams
-    with cols[0]:
-        st.metric(
-            "Total Streams",
-            f"{df['streams'].sum():,}",
-            "Across All Platforms"
-        )
+    .kpi-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        border-left: 6px solid;
+        border-radius: 20px;
+        padding: 32px 28px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06), 0 0 1px rgba(0, 0, 0, 0.05);
+        transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        position: relative;
+        overflow: hidden;
+        border-top: 1px solid rgba(255, 255, 255, 0.8);
+    }
     
-    # Revenue
-    with cols[1]:
-        st.metric(
-            "Est. Revenue",
-            format_ngn(impact_metrics['direct_revenue_ngn']),
-            f"+ {format_ngn(impact_metrics['indirect_revenue_ngn'])} indirect"
-        )
+    .kpi-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100px;
+        height: 100px;
+        background: radial-gradient(circle, rgba(14, 165, 164, 0.05) 0%, transparent 70%);
+        border-radius: 50%;
+        transform: translate(30%, -30%);
+    }
     
-    # Global Reach
-    with cols[2]:
-        country_count = len(df['country'].unique())
-        st.metric(
-            "Global Reach",
-            f"{country_count} Countries",
-            "Cultural Export"
-        )
+    .kpi-card:hover {
+        transform: translateY(-12px) translateZ(0);
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12), 0 0 1px rgba(0, 0, 0, 0.05);
+    }
     
-    # Underpayment Alerts
-    with cols[3]:
-        underpaid = detect_underpayment(df)
-        alert_count = len(underpaid)
-        st.metric(
-            "Underpayment Alerts",
-            f"{alert_count} Countries",
-            "Requiring Investigation"
-        )
+    .kpi-card.streams { border-left-color: #0EA5A4; }
+    .kpi-card.streams:hover { border-left-color: #10bfbd; }
+    
+    .kpi-card.revenue { border-left-color: #10b981; }
+    .kpi-card.revenue:hover { border-left-color: #059669; }
+    
+    .kpi-card.reach { border-left-color: #F59E0B; }
+    .kpi-card.reach:hover { border-left-color: #d97706; }
+    
+    .kpi-card.alerts { border-left-color: #EF4444; }
+    .kpi-card.alerts:hover { border-left-color: #dc2626; }
+    
+    .kpi-icon {
+        font-size: 2.8rem;
+        margin-bottom: 16px;
+        opacity: 0.95;
+        display: block;
+        transition: transform 0.3s ease;
+    }
+    
+    .kpi-card:hover .kpi-icon {
+        transform: scale(1.1);
+    }
+    
+    .kpi-label {
+        font-size: 0.8rem;
+        color: #64748B;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 14px;
+    }
+    
+    .kpi-value {
+        font-size: 2.4rem;
+        font-weight: 800;
+        color: #1F213A;
+        margin-bottom: 10px;
+        line-height: 1.2;
+    }
+    
+    .kpi-sublabel {
+        font-size: 0.85rem;
+        color: #94A3B8;
+        font-weight: 500;
+        line-height: 1.4;
+    }
+    
+    .kpi-trend {
+        font-size: 0.8rem;
+        margin-top: 16px;
+        padding-top: 14px;
+        border-top: 1px solid rgba(14, 165, 164, 0.15);
+        color: #10b981;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .kpi-card:hover .kpi-trend {
+        color: #059669;
+    }
+    </style>
+    """
+    
+    st.markdown(kpi_css, unsafe_allow_html=True)
+    
+    # Calculate metrics
+    total_streams = df['streams'].sum()
+    direct_revenue = impact_metrics['direct_revenue_ngn']
+    indirect_revenue = impact_metrics['indirect_revenue_ngn']
+    country_count = len(df['country'].unique())
+    underpaid = detect_underpayment(df)
+    alert_count = len(underpaid)
+    
+    # Format currency
+    def fmt_currency(val):
+        if val >= 1_000_000:
+            return f"₦{val/1_000_000:.1f}M"
+        elif val >= 1_000:
+            return f"₦{val/1_000:.0f}K"
+        return f"₦{val:.0f}"
+    
+    # Create KPI cards HTML with proper rendering
+    kpi_html = f"""<div class="kpi-container"><div class="kpi-card streams"><div class="kpi-icon">🎵</div><div class="kpi-label">Total Streams</div><div class="kpi-value">{total_streams:,}</div><div class="kpi-sublabel">Across All Platforms</div><div class="kpi-trend">↗️ All-time total</div></div><div class="kpi-card revenue"><div class="kpi-icon">💰</div><div class="kpi-label">Est. Revenue</div><div class="kpi-value">{fmt_currency(direct_revenue)}</div><div class="kpi-sublabel">Direct Revenue</div><div class="kpi-trend">+ {fmt_currency(indirect_revenue)} indirect</div></div><div class="kpi-card reach"><div class="kpi-icon">🌍</div><div class="kpi-label">Global Reach</div><div class="kpi-value">{country_count}</div><div class="kpi-sublabel">Countries & Territories</div><div class="kpi-trend">📈 Cultural Export</div></div><div class="kpi-card alerts"><div class="kpi-icon">⚠️</div><div class="kpi-label">Alerts</div><div class="kpi-value">{alert_count}</div><div class="kpi-sublabel">Underpayment Cases</div><div class="kpi-trend">🔍 Needs Investigation</div></div></div>"""
+    
+    st.markdown(kpi_html, unsafe_allow_html=True)
 
 def render_charts(df: pd.DataFrame, selected_platforms=None):
     """Render main dashboard visualizations."""
@@ -903,6 +1268,40 @@ def render_charts(df: pd.DataFrame, selected_platforms=None):
     if df.empty:
         st.warning("No data available for the selected platforms. Please select at least one platform.")
         return
+    
+    # Add enhanced chart styling
+    chart_css = """
+    <style>
+    .chart-section {
+        margin: 40px 0 20px 0;
+    }
+    
+    .chart-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1F213A;
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 3px solid #0EA5A4;
+        display: inline-block;
+    }
+    
+    .chart-wrapper {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        margin: 20px 0;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        border: 1px solid rgba(14, 165, 164, 0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .chart-wrapper:hover {
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+    }
+    </style>
+    """
+    st.markdown(chart_css, unsafe_allow_html=True)
         
     # Compute per-country impact and identify top-10 countries by impact
     # Ensure expected_revenue_ngn exists (estimate_royalties called earlier in main)
@@ -918,7 +1317,9 @@ def render_charts(df: pd.DataFrame, selected_platforms=None):
     top10 = country_impact.sort_values('impact_value_ngn', ascending=False).head(10).copy()
 
     # Global Streaming Distribution (choropleth colored by streams, with top-10 highlighted)
-    st.subheader("Global Streaming Distribution")
+    st.markdown('<div class="chart-section"><div class="chart-title">🌍 Global Streaming Distribution</div></div>', unsafe_allow_html=True)
+    st.markdown('<div class="chart-wrapper">', unsafe_allow_html=True)
+    
     geo_data = country_impact.copy()
     # Add a flag to indicate top10
     geo_data['is_top10'] = geo_data['country'].isin(top10['country']).astype(int)
@@ -929,8 +1330,23 @@ def render_charts(df: pd.DataFrame, selected_platforms=None):
         locationmode='country names',
         color='streams',
         color_continuous_scale='Viridis',
-        template="plotly_dark",
-        title='Global Streams (top-10 impact countries highlighted)'
+        template="plotly_white",
+        title=None,
+        hover_name='country',
+        hover_data={'streams': ':,'}
+    )
+    
+    fig_map.update_layout(
+        height=500,
+        margin=dict(l=0, r=0, t=0, b=0),
+        font=dict(family="Inter, sans-serif", size=12),
+        geo=dict(
+            showland=True,
+            landcolor='#f0f0f0',
+            coastlinecolor='#e0e0e0',
+            oceancolor='#e8f4f8'
+        ),
+        coloraxis_colorbar=dict(title="Streams", thickness=15)
     )
 
     # Overlay top-10 markers to highlight them
@@ -951,13 +1367,15 @@ def render_charts(df: pd.DataFrame, selected_platforms=None):
         pass
 
     st.plotly_chart(fig_map, use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
     # Streaming Trends and Revenue Analysis in equal columns
     col1, col2 = st.columns(2)
 
     with col1:
         # Streams by Platform
-        st.subheader("Streaming Trends")
+        st.markdown('<div class="chart-section"><div class="chart-title">📈 Streaming Trends</div></div>', unsafe_allow_html=True)
+        st.markdown('<div class="chart-wrapper">', unsafe_allow_html=True)
         platform_data = df.groupby('platform')['streams'].sum().reset_index()
         
         # Add platform icons
@@ -975,51 +1393,67 @@ def render_charts(df: pd.DataFrame, selected_platforms=None):
             x='platform_label',
             y='streams',
             color='platform',
-            template="plotly_dark",
+            template="plotly_white",
             labels={'platform_label': 'Platform', 'streams': 'Total Streams'}
         )
         
         # Enhanced styling
         fig_platform.update_traces(
-            marker_line_color='rgba(255,215,0,0.3)',
-            marker_line_width=1,
-            opacity=0.8
+            marker_line_color='rgba(14, 165, 164, 0.3)',
+            marker_line_width=2,
+            opacity=0.85
         )
         
         # Update layout
         fig_platform.update_layout(
-            title={
-                'text': f"Streaming Distribution Across {len(platform_data)} Platform(s)",
-                'y':0.95,
-                'x':0.5,
-                'xanchor': 'center',
-                'yanchor': 'top'
-            },
-            showlegend=False
+            showlegend=False,
+            height=400,
+            margin=dict(l=0, r=0, t=20, b=0),
+            font=dict(family="Inter, sans-serif", size=12),
+            xaxis_tickangle=-45,
+            hovermode='x unified'
         )
         
         st.plotly_chart(fig_platform, use_container_width=True)
         
-        # Add platform stats
+        # Add platform stats with export (modebar-style header)
         with st.expander("Platform Statistics"):
             stats_df = platform_data.copy()
             total_streams = stats_df['streams'].sum()
             stats_df['percentage'] = (stats_df['streams'] / total_streams * 100).round(2)
-            stats_df['streams'] = stats_df['streams'].map(lambda x: f"{int(x):,}")
-            stats_df['percentage'] = stats_df['percentage'].map(lambda x: f"{x}%")
+
+            # Keep numeric values for export
+            stats_export = stats_df.copy()
+
+            # Format for display
+            stats_display = stats_df.copy()
+            stats_display['streams'] = stats_display['streams'].map(lambda x: f"{int(x):,}")
+            stats_display['percentage'] = stats_display['percentage'].map(lambda x: f"{x}%")
+
+            # Render toolbar above the table (camera, zoom area, zoom in/out, fullscreen, download)
+            render_table_toolbar(
+                "📊 Platform Statistics",
+                df=stats_export[['platform', 'streams', 'percentage']],
+                file_name="platform_statistics.csv"
+            )
+
             st.dataframe(
-                stats_df[['platform', 'streams', 'percentage']],
+                stats_display[['platform', 'streams', 'percentage']],
                 column_config={
                     "platform": "Platform",
                     "streams": "Total Streams",
                     "percentage": "Market Share"
                 },
-                hide_index=True
+                hide_index=True,
+                use_container_width=True
             )
+        st.markdown('</div>', unsafe_allow_html=True)
 
     with col2:
         # Revenue Gap Analysis - show top-10 high impact countries by default
-        st.subheader("Revenue Gap Analysis (Top 10 Impact Countries)")
+        st.markdown('<div class="chart-section"><div class="chart-title">💹 Revenue Gap Analysis</div></div>', unsafe_allow_html=True)
+        st.markdown('<div class="chart-wrapper">', unsafe_allow_html=True)
+        
         show_revenue_details = st.checkbox("Show full country list", value=False)
 
         if show_revenue_details:
@@ -1027,6 +1461,9 @@ def render_charts(df: pd.DataFrame, selected_platforms=None):
         else:
             display_df = top10.copy()
 
+        # Keep original values for export
+        export_df = display_df.copy()
+        
         display_df = display_df.assign(
             streams=display_df['streams'].map('{:,.0f}'.format),
             expected_revenue_ngn=display_df['expected_revenue_ngn'].map(lambda x: f"₦{x:,.0f}"),
@@ -1034,10 +1471,26 @@ def render_charts(df: pd.DataFrame, selected_platforms=None):
             revenue_gap=display_df['revenue_gap'].map(lambda x: f"₦{x:,.0f}")
         )
 
-        st.dataframe(display_df[['country', 'streams', 'expected_revenue_ngn', 'actual_revenue_ngn', 'revenue_gap']])
+        # Toolbar above the table (replaces previous inline controls)
+        render_table_toolbar(
+            "💹 Revenue Gap Analysis",
+            df=export_df[['country', 'streams', 'expected_revenue_ngn', 'actual_revenue_ngn', 'revenue_gap']],
+            file_name="revenue_gap_analysis.csv"
+        )
 
-    render_revenue_gap_visualization(country_impact, top10)
-
+        st.dataframe(
+            display_df[['country', 'streams', 'expected_revenue_ngn', 'actual_revenue_ngn', 'revenue_gap']],
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                'country': st.column_config.TextColumn('Country', width='small'),
+                'streams': st.column_config.TextColumn('Streams', width='medium'),
+                'expected_revenue_ngn': st.column_config.TextColumn('Expected Revenue', width='medium'),
+                'actual_revenue_ngn': st.column_config.TextColumn('Actual Revenue', width='medium'),
+                'revenue_gap': st.column_config.TextColumn('Gap', width='medium')
+            }
+        )
+        st.markdown('</div>', unsafe_allow_html=True)
 
 def main():
     """Main dashboard layout and logic."""
@@ -1554,14 +2007,22 @@ def main():
 
     # Country-level detail panel when drilled down
     if drill_country != 'All':
-        st.subheader(f"Details for {drill_country}")
         country_agg = filtered_df.groupby('platform').agg({'streams': 'sum', 'expected_revenue_ngn': 'sum', 'actual_revenue_ngn': 'sum'}).reset_index()
+        
+        # Toolbar for the country detail table
+        render_table_toolbar(
+            f"🌍 Details for {drill_country}",
+            df=country_agg,
+            file_name=f"{drill_country}_platform_breakdown.csv"
+        )
+
         fig_country = px.bar(country_agg, x='platform', y='streams', title=f"Streams in {drill_country} by Platform", template='plotly_dark')
         st.plotly_chart(fig_country, use_container_width=True)
+
         st.dataframe(country_agg.assign(
             expected_revenue_ngn=country_agg['expected_revenue_ngn'].map(lambda x: f"₦{x:,.0f}"),
             actual_revenue_ngn=country_agg['actual_revenue_ngn'].map(lambda x: f"₦{x:,.0f}")
-        ))
+        ), hide_index=True, use_container_width=True)
     
     # Web Scraping Data Display
     if 'web_scraped_data' in st.session_state and not st.session_state['web_scraped_data'].empty:
@@ -1576,9 +2037,6 @@ def main():
         
         with tab1:
             # Display all scraped data in a nice format
-            st.write(f"**Total sources found:** {len(web_df)}")
-            
-            # Create columns for better display
             cols_to_display = ['artist', 'title', 'source', 'url', 'date_fetched']
             cols_available = [col for col in cols_to_display if col in web_df.columns]
             
@@ -1591,6 +2049,13 @@ def main():
                     lambda x: f"[🔗 Link]({x})" if pd.notna(x) and x != 'N/A' else 'N/A'
                 )
             
+            # Toolbar above the All Sources table
+            render_table_toolbar(
+                f"📋 Total sources found: {len(web_df)}",
+                df=web_df[cols_available],
+                file_name=f"{web_artist}_web_sources.csv"
+            )
+
             st.dataframe(
                 display_df,
                 use_container_width=True,
@@ -1614,6 +2079,14 @@ def main():
             
             with col_left:
                 st.metric("Total Sources", len(web_df['source'].unique()))
+                
+                # Toolbar above the Source List table
+                render_table_toolbar(
+                    "Source List",
+                    df=source_breakdown,
+                    file_name=f"{web_artist}_source_breakdown.csv"
+                )
+
                 st.dataframe(source_breakdown, hide_index=True, use_container_width=True)
             
             with col_right:
@@ -1629,8 +2102,6 @@ def main():
         
         with tab3:
             # Source statistics and metadata
-            st.write("**Source Statistics**")
-            
             stats_data = []
             for source in web_df['source'].unique():
                 source_data = web_df[web_df['source'] == source]
@@ -1640,19 +2111,16 @@ def main():
                     'First Fetched': source_data['date_fetched'].min(),
                     'Last Fetched': source_data['date_fetched'].max()
                 })
-            
             stats_df = pd.DataFrame(stats_data)
-            st.dataframe(stats_df, hide_index=True, use_container_width=True)
             
-            # Export option
-            if st.button("📥 Export Web Data as CSV", key="export_web_data"):
-                csv = web_df.to_csv(index=False)
-                st.download_button(
-                    label="Download CSV",
-                    data=csv,
-                    file_name=f"web_scrape_{web_artist}_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                    mime="text/csv"
-                )
+            # Toolbar above the Source Statistics table
+            render_table_toolbar(
+                "📊 Source Statistics",
+                df=stats_df,
+                file_name=f"{web_artist}_web_statistics.csv"
+            )
+
+            st.dataframe(stats_df, hide_index=True, use_container_width=True)
     
     # Economic Impact Details
     with st.expander("📊 Economic Impact Analysis"):
@@ -1669,6 +2137,28 @@ def main():
             'Metric': 'Total Economic Impact',
             'Value': format_ngn(impact_metrics['total_economic_impact_ngn'])
         }])
+        
+        # Toolbar above the Economic Impact metrics table (download enabled via toolbar)
+        impact_export_df = pd.DataFrame([{
+            'Metric': 'Direct Streaming Revenue',
+            'Value': impact_metrics['direct_revenue_ngn']
+        }, {
+            'Metric': 'Indirect Revenue (Est.)',
+            'Value': impact_metrics['indirect_revenue_ngn']
+        }, {
+            'Metric': 'Cultural Export Value',
+            'Value': impact_metrics['cultural_export_value_ngn']
+        }, {
+            'Metric': 'Total Economic Impact',
+            'Value': impact_metrics['total_economic_impact_ngn']
+        }])
+
+        render_table_toolbar(
+            "Economic Impact Metrics",
+            df=impact_export_df,
+            file_name="economic_impact_analysis.csv"
+        )
+
         st.table(impact_df)
     
     # AI Economic Impact & Job Creation Predictions
@@ -1677,212 +2167,9 @@ def main():
         display_economic_impact_section()
     else:
         st.warning("⚠️ AI Economic Impact module not loaded. Check imports.")
+    
+    # ============================================
 
-# helper function forvisualization
-def render_revenue_gap_visualization(country_impact, top10):
-    """
-    Render an engaging revenue gap analysis visualization
-    
-    Args:
-        country_impact: DataFrame with country-level aggregated data
-        top10: DataFrame with top 10 countries by impact
-    """
-    
-    # Option 1: Grouped Bar Chart (Recommended for clarity)
-    st.subheader("Revenue Gap Analysis (Top 10 Impact Countries)")
-    
-    # Prepare data for visualization
-    viz_data = top10.copy()
-    
-    # Create grouped bar chart
-    fig_revenue = go.Figure()
-    
-    # Add Expected Revenue bars
-    fig_revenue.add_trace(go.Bar(
-        name='Expected Revenue',
-        x=viz_data['country'],
-        y=viz_data['expected_revenue_ngn'],
-        marker=dict(
-            color='#0EA5A4',  # Your primary teal color
-            line=dict(color='#0c8483', width=1)
-        ),
-        text=viz_data['expected_revenue_ngn'].apply(lambda x: f"₦{x:,.0f}"),
-        textposition='outside',
-        textfont=dict(size=10),
-        hovertemplate='<b>%{x}</b><br>Expected: ₦%{y:,.0f}<extra></extra>'
-    ))
-    
-    # Add Actual Revenue bars
-    fig_revenue.add_trace(go.Bar(
-        name='Actual Revenue',
-        x=viz_data['country'],
-        y=viz_data['actual_revenue_ngn'],
-        marker=dict(
-            color='#F59E0B',  # Your accent orange color
-            line=dict(color='#d97706', width=1)
-        ),
-        text=viz_data['actual_revenue_ngn'].apply(lambda x: f"₦{x:,.0f}"),
-        textposition='outside',
-        textfont=dict(size=10),
-        hovertemplate='<b>%{x}</b><br>Actual: ₦%{y:,.0f}<extra></extra>'
-    ))
-    
-    # Update layout for modern look
-    fig_revenue.update_layout(
-        title={
-            'text': 'Expected vs Actual Revenue by Country',
-            'y': 0.95,
-            'x': 0.5,
-            'xanchor': 'center',
-            'yanchor': 'top',
-            'font': dict(size=18, color='#1F213A', weight='bold')
-        },
-        xaxis=dict(
-            title='Country',
-            tickangle=-45,
-            gridcolor='rgba(14, 165, 164, 0.1)',
-            showgrid=True
-        ),
-        yaxis=dict(
-            title='Revenue (NGN)',
-            gridcolor='rgba(14, 165, 164, 0.1)',
-            showgrid=True
-        ),
-        barmode='group',
-        template='plotly_white',
-        hovermode='x unified',
-        plot_bgcolor='rgba(244, 247, 245, 0.5)',
-        paper_bgcolor='white',
-        font=dict(family='Inter, sans-serif', color='#1F213A'),
-        legend=dict(
-            orientation='h',
-            yanchor='bottom',
-            y=1.02,
-            xanchor='right',
-            x=1,
-            bgcolor='rgba(255, 255, 255, 0.9)',
-            bordercolor='rgba(14, 165, 164, 0.2)',
-            borderwidth=1
-        ),
-        margin=dict(t=100, b=100),
-        height=500
-    )
-    
-    st.plotly_chart(fig_revenue, use_container_width=True)
-    
-    # Option 2: Revenue Gap Waterfall Chart (Shows the gap more dramatically)
-    st.markdown("### Revenue Gap Breakdown")
-    
-    # Calculate total gaps
-    total_expected = viz_data['expected_revenue_ngn'].sum()
-    total_actual = viz_data['actual_revenue_ngn'].sum()
-    total_gap = total_expected - total_actual
-    
-    # Create waterfall data
-    waterfall_data = []
-    cumulative = 0
-    
-    for _, row in viz_data.iterrows():
-        gap = row['expected_revenue_ngn'] - row['actual_revenue_ngn']
-        waterfall_data.append({
-            'country': row['country'],
-            'gap': gap,
-            'cumulative': cumulative + gap
-        })
-        cumulative += gap
-    
-    waterfall_df = pd.DataFrame(waterfall_data)
-    
-    # Create waterfall chart
-    fig_waterfall = go.Figure()
-    
-    # Add bars for each country's gap
-    colors = ['#DC2626' if gap > 0 else '#16A34A' 
-              for gap in waterfall_df['gap']]
-    
-    fig_waterfall.add_trace(go.Bar(
-        x=waterfall_df['country'],
-        y=waterfall_df['gap'],
-        marker=dict(
-            color=colors,
-            line=dict(color='rgba(0,0,0,0.3)', width=1)
-        ),
-        text=waterfall_df['gap'].apply(lambda x: f"₦{x:,.0f}"),
-        textposition='outside',
-        hovertemplate='<b>%{x}</b><br>Gap: ₦%{y:,.0f}<extra></extra>',
-        name='Revenue Gap'
-    ))
-    
-    fig_waterfall.update_layout(
-        title={
-            'text': f'Revenue Gap by Country (Total Gap: ₦{total_gap:,.0f})',
-            'y': 0.95,
-            'x': 0.5,
-            'xanchor': 'center',
-            'yanchor': 'top'
-        },
-        xaxis=dict(
-            title='Country',
-            tickangle=-45,
-            gridcolor='rgba(14, 165, 164, 0.1)'
-        ),
-        yaxis=dict(
-            title='Revenue Gap (NGN)',
-            gridcolor='rgba(14, 165, 164, 0.1)',
-            zeroline=True,
-            zerolinecolor='rgba(14, 165, 164, 0.3)',
-            zerolinewidth=2
-        ),
-        template='plotly_white',
-        plot_bgcolor='rgba(244, 247, 245, 0.5)',
-        paper_bgcolor='white',
-        height=400,
-        showlegend=False
-    )
-    
-    st.plotly_chart(fig_waterfall, use_container_width=True)
-    
-    # Option 3: Heatmap for detailed comparison
-    with st.expander("📊 Detailed Revenue Comparison Matrix"):
-        # Prepare heatmap data
-        heatmap_data = viz_data[['country', 'expected_revenue_ngn', 
-                                  'actual_revenue_ngn', 'revenue_gap']].copy()
-        
-        # Normalize for color scale
-        heatmap_data['gap_percentage'] = (
-            (heatmap_data['revenue_gap'] / heatmap_data['expected_revenue_ngn']) * 100
-        )
-        
-        # Create heatmap
-        fig_heatmap = go.Figure(data=go.Heatmap(
-            z=[heatmap_data['expected_revenue_ngn'], 
-               heatmap_data['actual_revenue_ngn'],
-               heatmap_data['revenue_gap']],
-            x=heatmap_data['country'],
-            y=['Expected Revenue', 'Actual Revenue', 'Revenue Gap'],
-            colorscale=[
-                [0, '#F59E0B'],      # Orange for low
-                [0.5, '#0EA5A4'],    # Teal for medium
-                [1, '#7C3AED']       # Purple for high
-            ],
-            text=[[f"₦{val:,.0f}" for val in heatmap_data['expected_revenue_ngn']],
-                  [f"₦{val:,.0f}" for val in heatmap_data['actual_revenue_ngn']],
-                  [f"₦{val:,.0f}" for val in heatmap_data['revenue_gap']]],
-            texttemplate='%{text}',
-            textfont=dict(size=10),
-            hovertemplate='%{y}<br>%{x}: %{text}<extra></extra>',
-            colorbar=dict(title='Amount (NGN)')
-        ))
-        
-        fig_heatmap.update_layout(
-            title='Revenue Comparison Heatmap',
-            xaxis=dict(tickangle=-45),
-            template='plotly_white',
-            height=300
-        )
-        
-        st.plotly_chart(fig_heatmap, use_container_width=True)
-        
 
 if __name__ == "__main__":
     main()
