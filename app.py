@@ -975,124 +975,85 @@ h3 {
 
 
 def render_table_toolbar(title: str, df: Optional[pd.DataFrame] = None, file_name: str = "data.csv") -> None:
-        """Render a toolbar above tables using Font Awesome icons and embed JS behaviors.
+    """Render a very small toolbar (icon-only) with JSON/CSV downloads and fullscreen view.
 
-        Behavior implemented client-side (best-effort):
-        - Screenshot: captures the rendered table using html2canvas and downloads PNG
-        - Zoom Area: toggles a modest focused zoom (best-effort)
-        - Zoom In / Zoom Out: scales the found table element
-        - Fullscreen: opens a new window and writes the table HTML
-        - Download: downloads the CSV for the provided DataFrame
+    Fullscreen uses an expander at the top of the page to maximize available space.
+    """
+    import hashlib
 
-        Note: Streamlit's DOM structure may vary; the script searches for the next <table>
-        sibling after the toolbar to apply actions. This is best-effort and works with
-        most `st.dataframe`/`st.table` outputs rendered directly after the toolbar.
-        """
+    # Use a deterministic id based on title+file_name so session-state keys
+    # persist across Streamlit reruns (avoids a new random id each render)
+    uid = hashlib.md5(f"{title}_{file_name}".encode()).hexdigest()[:8]
 
-        csv_text = None
-        if df is not None:
-                csv_text = df.to_csv(index=False)
-                # JSON-encode to safely embed in JS
-                csv_js = json.dumps(csv_text)
-        else:
-                csv_js = 'null'
+    # Title + buttons layout
+    col_title, col_buttons = st.columns([2, 1])
 
-        template = """
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<style>
-.tuneiq-toolbar{position:relative;margin-bottom:8px}
-.tuneiq-toolbar .toolbar{position:relative;display:inline-flex;gap:6px;right:0;float:right}
-.tuneiq-toolbar .icon{width:34px;height:34px;border-radius:6px;background:rgba(255,255,255,0.96);border:1px solid rgba(0,0,0,0.06);box-shadow:0 1px 2px rgba(0,0,0,0.06);display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0.95;font-size:14px}
-.tuneiq-toolbar .icon:hover{transform:translateY(-1px);opacity:1}
-.tuneiq-toolbar h4{margin:0;padding:6px 0;font-weight:600}
-.tuneiq-toolbar:after{content:'';display:block;clear:both}
-</style>
-<div class='tuneiq-toolbar' data-csv={CSV_JS} data-filename='{FILE_NAME}'><h4>{TITLE}</h4>
-    <div class='toolbar' aria-label='table-toolbar'>
-        <button class='icon' title='Screenshot' onclick='tui_screenshot(this)'><i class='fa fa-camera'></i></button>
-        <button class='icon' title='Zoom Area' onclick='tui_zoom_area(this)'><i class='fa fa-vector-square'></i></button>
-        <button class='icon' title='Zoom In' onclick='tui_scale(this,1.2)'><i class='fa fa-search-plus'></i></button>
-        <button class='icon' title='Zoom Out' onclick='tui_scale(this,0.8)'><i class='fa fa-search-minus'></i></button>
-        <button class='icon' title='Fullscreen' onclick='tui_fullscreen(this)'><i class='fa fa-expand'></i></button>
-        <button class='icon' title='Download CSV' onclick='tui_download(this)'><i class='fa fa-download'></i></button>
-    </div>
-</div>
+    with col_title:
+        st.markdown(f"<h4 style='margin: 0; padding: 4px 0; color: #0f172a; font-size:0.95rem;'>{title}</h4>", unsafe_allow_html=True)
 
-<script>
-function tui_find_table(toolbarEl){
-    var node = toolbarEl.nextElementSibling;
-    while(node){
-        try{
-            var tbl = node.querySelector && node.querySelector('table');
-            if(tbl) return tbl;
-        }catch(e){}
-        node = node.nextElementSibling;
-    }
-    return null;
-}
+    with col_buttons:
+        # Wrap toolbar in a scoped div so CSS is targeted and doesn't affect other buttons
+        st.markdown(f"<div class='tiny-toolbar-{uid}'>", unsafe_allow_html=True)
 
-function tui_screenshot(btn){
-    var toolbar = btn.closest('.tuneiq-toolbar');
-    var tbl = tui_find_table(toolbar);
-    if(!tbl){alert('Table not found for screenshot'); return;}
-    if(typeof html2canvas === 'undefined'){
-        var s=document.createElement('script');
-        s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-        s.onload=function(){ html2canvas(tbl).then(function(c){ var a=document.createElement('a'); a.href=c.toDataURL(); a.download='table_screenshot.png'; a.click(); }); };
-        document.body.appendChild(s);
-    }else{
-        html2canvas(tbl).then(function(c){ var a=document.createElement('a'); a.href=c.toDataURL(); a.download='table_screenshot.png'; a.click(); });
-    }
-}
+        # Tiny toolbar CSS (scoped)
+        st.markdown(f"""
+        <style>
+        .tiny-toolbar-{uid} .stButton>button {{
+            min-width: 18px !important;
+            height: 18px !important;
+            padding: 0 2px !important;
+            border-radius: 4px !important;
+            font-size: 10px !important;
+            line-height: 0.8 !important;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }}
+        </style>
+        """, unsafe_allow_html=True)
 
-function tui_scale(btn,factor){
-    var toolbar = btn.closest('.tuneiq-toolbar');
-    var tbl = tui_find_table(toolbar);
-    if(!tbl){alert('Table not found for zoom'); return;}
-    var cur = tbl.style.transform.match(/scale\\(([^)]+)\\)/);
-    var val = cur ? parseFloat(cur[1]) : 1;
-    val = Math.max(0.25, Math.min(5, val * factor));
-    tbl.style.transformOrigin = '0 0';
-    tbl.style.transform = 'scale('+val+')';
-}
+        btn_cols = st.columns([1, 1, 1], gap='small')
 
-function tui_zoom_area(btn){
-    var toolbar = btn.closest('.tuneiq-toolbar');
-    var tbl = tui_find_table(toolbar);
-    if(!tbl){alert('Table not found for zoom area'); return;}
-    // Simple toggle: set a modest focused zoom and overflow auto so user can pan
-    if(tbl.classList.contains('tui-zoom-area')){
-        tbl.classList.remove('tui-zoom-area'); tbl.style.transform='scale(1)'; tbl.style.maxHeight=''; tbl.style.overflow='';
-    }else{
-        tbl.classList.add('tui-zoom-area'); tbl.style.transform='scale(1.25)'; tbl.style.maxHeight='600px'; tbl.style.overflow='auto';
-    }
-}
+        # JSON download
+        with btn_cols[0]:
+            if df is not None:
+                json_str = df.to_json(orient='records', indent=2)
+                st.download_button(label="💾", data=json_str, file_name=file_name.replace('.csv', '.json'), mime="application/json", key=f"json_{uid}", help="Download JSON")
+            else:
+                st.button("💾", key=f"save_disabled_{uid}", disabled=True)
 
-function tui_fullscreen(btn){
-    var toolbar = btn.closest('.tuneiq-toolbar');
-    var tbl = tui_find_table(toolbar);
-    if(!tbl){alert('Table not found for fullscreen'); return;}
-    var w = window.open('','_blank');
-    w.document.write('<html><head><title>Table Fullscreen</title></head><body>'+tbl.outerHTML+'</body></html>');
-    w.document.close();
-}
+        # CSV download
+        with btn_cols[1]:
+            if df is not None:
+                csv_str = df.to_csv(index=False)
+                st.download_button(label="⬇️", data=csv_str, file_name=file_name, mime="text/csv", key=f"csv_{uid}", help="Download CSV")
+            else:
+                st.button("⬇️", key=f"csv_disabled_{uid}", disabled=True)
 
-function tui_download(btn){
-    var toolbar = btn.closest('.tuneiq-toolbar');
-    var csv = toolbar.getAttribute('data-csv');
-    var filename = toolbar.getAttribute('data-filename') || 'table.csv';
-    if(!csv || csv==='null'){ alert('No CSV available for this table'); return; }
-    var a = document.createElement('a');
-    a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-    a.download = filename;
-    a.click();
-}
-</script>
-"""
+        # Fullscreen toggle (sets session state)
+        with btn_cols[2]:
+            clicked_full = st.button("⛶", key=f"fullscreen_{uid}", help="Expand to fullscreen")
+            if clicked_full and df is not None:
+                st.session_state[f"toolbar_fullscreen_{uid}"] = True
 
-        toolbar_html = template.replace('{CSV_JS}', csv_js).replace('{FILE_NAME}', file_name).replace('{TITLE}', title)
+        st.markdown("</div>", unsafe_allow_html=True)
 
-        st.markdown(toolbar_html, unsafe_allow_html=True)
+    # If fullscreen flag set, render a large expander-based fullscreen view
+    fs_key = f"toolbar_fullscreen_{uid}"
+    if st.session_state.get(fs_key):
+        # Use an expander that's expanded by default to create a large viewing area
+        with st.expander(f"⛶ Fullscreen — {title}", expanded=True):
+            col_close, col_spacer = st.columns([1, 9])
+            with col_close:
+                if st.button("✕ Close", key=f"close_fullscreen_{uid}"):
+                    st.session_state[fs_key] = False
+                    st.rerun()
+            
+            st.divider()
+            
+            # Render the dataframe in fullscreen (use large height)
+            if df is not None:
+                st.dataframe(df, width='stretch', height=600, key=f"fullscreen_df_{uid}")
 
 
 def load_data(use_live: bool = False) -> pd.DataFrame:
@@ -1604,7 +1565,7 @@ def render_charts(df: pd.DataFrame, selected_platforms=None):
     except Exception:
         pass
 
-    st.plotly_chart(fig_map, use_container_width=True)
+    st.plotly_chart(fig_map, width='stretch')
     st.markdown('</div>', unsafe_allow_html=True)
 
     # ===== NEW LAYOUT: Streaming Trends 2 Column Grid =====
@@ -1658,7 +1619,7 @@ def render_charts(df: pd.DataFrame, selected_platforms=None):
             yaxis=dict(gridcolor='rgba(14, 165, 164, 0.1)')
         )
         
-        st.plotly_chart(fig_platform, use_container_width=True)
+        st.plotly_chart(fig_platform, width='stretch')
         st.markdown('</div>', unsafe_allow_html=True)
     
     with streaming_col2:
@@ -1692,7 +1653,7 @@ def render_charts(df: pd.DataFrame, selected_platforms=None):
                 "percentage_formatted": st.column_config.TextColumn("Market Share", width="small")
             },
             hide_index=True,
-            use_container_width=True,
+            width='stretch',
             height=350
         )
         st.markdown('</div>', unsafe_allow_html=True)
@@ -1750,7 +1711,7 @@ def render_charts(df: pd.DataFrame, selected_platforms=None):
                 "Gap %": st.column_config.NumberColumn("Gap %", format="%.1f%%")
             },
             hide_index=True,
-            use_container_width=True,
+            width='stretch',
             height=350
         )
         
@@ -1825,7 +1786,7 @@ def render_charts(df: pd.DataFrame, selected_platforms=None):
             height=400
         )
         
-        st.plotly_chart(fig_revenue, use_container_width=True)
+        st.plotly_chart(fig_revenue, width='stretch')
         st.markdown('</div>', unsafe_allow_html=True)
     
     # Row 2: Heatmap (Left) and Revenue Gap Chart (Right)
@@ -1886,7 +1847,7 @@ def render_charts(df: pd.DataFrame, selected_platforms=None):
             font=dict(family='Inter, sans-serif', size=11)
         )
         
-        st.plotly_chart(fig_heatmap, use_container_width=True)
+        st.plotly_chart(fig_heatmap, width='stretch')
         st.markdown('</div>', unsafe_allow_html=True)
     
     with row2_col2:
@@ -1944,7 +1905,7 @@ def render_charts(df: pd.DataFrame, selected_platforms=None):
             font=dict(family='Inter, sans-serif', color='#1F213A', size=11)
         )
         
-        st.plotly_chart(fig_gap, use_container_width=True)
+        st.plotly_chart(fig_gap, width='stretch')
         st.markdown('</div>', unsafe_allow_html=True)
 
 def main():
@@ -2101,31 +2062,51 @@ def main():
         # Default artist selection for Filters & Analysis (keeps prior behavior if Burna Boy exists)
         st.session_state.filter_artist = NIGERIAN_ARTISTS[0] if len(NIGERIAN_ARTISTS) > 0 else None
 
+    # Header buttons styling for full-width alignment
+    st.markdown("""
+    <style>
+    /* Full-width button container */
+    .header-buttons-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 20px;
+        width: 100%;
+    }
+    
+    /* Stretch buttons to fill grid cells */
+    .header-buttons-container button {
+        width: 100% !important;
+        padding: 12px 20px !important;
+        font-size: 1rem !important;
+        font-weight: 500 !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
     # Header buttons in a single row with selection state
-    header_cols = st.columns(2)
+    header_cols = st.columns(2, gap="medium")
     
     # Initialize button states in session state if not present
     if 'active_section' not in st.session_state:
         st.session_state.active_section = None
     
     with header_cols[0]:
-        btn_style = "selected" if st.session_state.show_live_data else ""
         if st.button(
             "📊 Data Configuration",
             key="live_data_btn",
             help="Configure data source and select platforms",
-            use_container_width=True
+            width='stretch'
         ):
             st.session_state.show_live_data = not st.session_state.show_live_data
             st.session_state.active_section = "data_source" if not st.session_state.show_live_data else None
     
     with header_cols[1]:
-        btn_style = "selected" if st.session_state.show_filters else ""
         if st.button(
-            "🔍 Filters & Analysis",
+            "🔍 Apply Filter",
             key="filters_btn",
             help="Set time period and country filters",
-            use_container_width=True
+            width='stretch'
         ):
             st.session_state.show_filters = not st.session_state.show_filters
             st.session_state.show_live_data = False
@@ -2161,13 +2142,13 @@ def main():
             st.markdown("---")
             st.markdown('<p class="section-title">🌐 Web Data Source</p>', unsafe_allow_html=True)
             
-            web_scraper_col1, web_scraper_col2 = st.columns([2, 1])
+            web_scraper_col1, web_scraper_col2 = st.columns([1.5, 1], gap="medium")
             with web_scraper_col1:
                 # Artist selection has been moved to Filters & Analysis.
                 current_filter_artist = st.session_state.get('filter_artist', NIGERIAN_ARTISTS[0] if NIGERIAN_ARTISTS else 'Unknown')
                 st.markdown(f"**Artist (Filters & Analysis):** {current_filter_artist}")
             with web_scraper_col2:
-                fetch_web_data = st.button("🔍 Scrape Web Data", use_container_width=True, key="web_scrape_btn")
+                fetch_web_data = st.button("🔎 Web Scraper", key="web_scrape_btn", help="Scrape Web Data", width='stretch')
             
             if fetch_web_data:
                 # Use the artist selected in Filters & Analysis
@@ -2187,7 +2168,7 @@ def main():
                                 # Create a formatted display of web scrape results
                                 display_cols = ["artist", "title", "source", "url", "date_fetched"]
                                 available_cols = [col for col in display_cols if col in web_df.columns]
-                                st.dataframe(web_df[available_cols], use_container_width=True)
+                                st.dataframe(web_df[available_cols], width='stretch')
                         else:
                             st.warning(f"⚠️ No results found for {artist_for_scrape}. Try a different artist in Filters & Analysis or check your internet connection.")
                     except Exception as e:
@@ -2472,12 +2453,12 @@ def main():
         )
 
         fig_country = px.bar(country_agg, x='platform', y='streams', title=f"Streams in {drill_country} by Platform", template='plotly_dark')
-        st.plotly_chart(fig_country, use_container_width=True)
+        st.plotly_chart(fig_country, width='stretch')
 
         st.dataframe(country_agg.assign(
             expected_revenue_ngn=country_agg['expected_revenue_ngn'].map(lambda x: f"₦{x:,.0f}"),
             actual_revenue_ngn=country_agg['actual_revenue_ngn'].map(lambda x: f"₦{x:,.0f}")
-        ), hide_index=True, use_container_width=True)
+        ), hide_index=True, width='stretch')
     
     # Web Scraping Data Display
     if 'web_scraped_data' in st.session_state and not st.session_state['web_scraped_data'].empty:
@@ -2513,7 +2494,7 @@ def main():
 
             st.dataframe(
                 display_df,
-                use_container_width=True,
+                width='stretch',
                 column_config={
                     "artist": "Artist",
                     "title": "Title/Content",
@@ -2542,7 +2523,7 @@ def main():
                     file_name=f"{web_artist}_source_breakdown.csv"
                 )
 
-                st.dataframe(source_breakdown, hide_index=True, use_container_width=True)
+                st.dataframe(source_breakdown, hide_index=True, width='stretch')
             
             with col_right:
                 # Pie chart of source distribution
@@ -2553,7 +2534,7 @@ def main():
                     title='Data Distribution by Source',
                     template='plotly_dark'
                 )
-                st.plotly_chart(fig_sources, use_container_width=True)
+                st.plotly_chart(fig_sources, width='stretch')
         
         with tab3:
             # Source statistics and metadata
@@ -2575,7 +2556,7 @@ def main():
                 file_name=f"{web_artist}_web_statistics.csv"
             )
 
-            st.dataframe(stats_df, hide_index=True, use_container_width=True)
+            st.dataframe(stats_df, hide_index=True, width='stretch')
     
     # Economic Impact Details
     with st.expander("📊 Economic Impact Analysis"):
@@ -2726,7 +2707,7 @@ def render_revenue_gap_visualization(country_impact, top10):
         height=500
     )
     
-    st.plotly_chart(fig_revenue, use_container_width=True)
+    st.plotly_chart(fig_revenue, width='stretch')
     
     # Option 2: Revenue Gap Waterfall Chart (Shows the gap more dramatically)
     st.markdown("### Revenue Gap Breakdown")
@@ -2798,7 +2779,7 @@ def render_revenue_gap_visualization(country_impact, top10):
         showlegend=False
     )
     
-    st.plotly_chart(fig_waterfall, use_container_width=True)
+    st.plotly_chart(fig_waterfall, width='stretch')
     
     # Option 3: Heatmap for detailed comparison
     with st.expander("📊 Detailed Revenue Comparison Matrix"):
@@ -2839,7 +2820,7 @@ def render_revenue_gap_visualization(country_impact, top10):
             height=300
         )
         
-        st.plotly_chart(fig_heatmap, use_container_width=True)
+        st.plotly_chart(fig_heatmap, width='stretch')
     
     # # Summary metrics in columns
     # col1, col2, col3 = st.columns(3)
